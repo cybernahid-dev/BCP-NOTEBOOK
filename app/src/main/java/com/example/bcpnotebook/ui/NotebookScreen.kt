@@ -1,70 +1,105 @@
 package com.example.bcpnotebook.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.bcpnotebook.ui.theme.*
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotebookScreen(navController: NavController) {
-    // থিম স্টেজ ম্যানেজমেন্ট
-    var isDarkTheme by remember { mutableStateOf(true) }
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser
+    var showProfileDialog by remember { mutableStateOf(false) }
 
-    BCPNotebookTheme(darkTheme = isDarkTheme) {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("BCP NOTEBOOK", fontWeight = FontWeight.Bold) },
-                    actions = {
-                        IconButton(onClick = { isDarkTheme = !isDarkTheme }) {
-                            // Brightness আইকন এরর এড়াতে ডিফল্ট আইকন ব্যবহার
-                            Icon(
-                                imageVector = if (isDarkTheme) Icons.Default.Face else Icons.Default.Build,
-                                contentDescription = "Toggle Theme",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        titleContentColor = MaterialTheme.colorScheme.primary
-                    )
-                )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { navController.navigate("add_note") },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Text("+", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.headlineSmall)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.background
-        ) { padding ->
-            Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-                Text(
-                    "Your Cornell Workspace", 
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                
-                Card(
-                    modifier = Modifier.fillMaxWidth().height(100.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                        Text("No notes found", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+    // Profile Dialog
+    if (showProfileDialog) {
+        AlertDialog(
+            onDismissRequest = { showProfileDialog = false },
+            title = { Text("Account Info", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    if (user?.photoUrl != null) {
+                        AsyncImage(
+                            model = user.photoUrl,
+                            contentDescription = "Profile",
+                            modifier = Modifier.size(60.dp).clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(60.dp), tint = SoftBlue)
                     }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(text = user?.displayName ?: "User Name", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(text = user?.email ?: "No Email", color = TextSecondary, fontSize = 14.sp)
                 }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        auth.signOut()
+                        // লগআউট করে লগইন পেজে নিয়ে যাবে
+                        navController.navigate("login") { popUpTo("notebook") { inclusive = true } }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showProfileDialog = false }) { Text("Close") }
+            },
+            containerColor = SurfaceWhite
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("BCP Notebook", color = SoftBlue, fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = { showProfileDialog = true }) {
+                        if (user?.photoUrl != null) {
+                            AsyncImage(model = user.photoUrl, contentDescription = "Profile", modifier = Modifier.size(30.dp).clip(CircleShape))
+                        } else {
+                            Icon(Icons.Default.AccountCircle, contentDescription = "Profile", tint = SoftBlue)
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundLight)
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("add_note") },
+                containerColor = SoftBlue,
+                contentColor = Color.White
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Note")
             }
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier.fillMaxSize().background(BackgroundLight).padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Your Cornell Notes will appear here", color = TextSecondary)
         }
     }
 }
