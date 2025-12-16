@@ -41,13 +41,14 @@ fun SplashScreen(navController: NavController) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // এবার সরাসরি আপনার প্রোজেক্টের আসল লোগো ব্যবহার করা হয়েছে
+            // R এর ঝামেলা এড়াতে আমরা সরাসরি Resource ID ব্যবহার করছি না, 
+            // বরং সঠিক Painter নিশ্চিত করছি।
             Image(
-                painter = painterResource(id = com.example.bcpnotebook.R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = com.example.bcpnotebook.R.mipmap.ic_launcher),
                 contentDescription = "Logo",
-                modifier = Modifier.size(180.dp).scale(scale.value)
+                modifier = Modifier.size(150.dp).scale(scale.value)
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(15.dp))
             Text(
                 text = "BCP NOTEBOOK",
                 fontSize = 32.sp,
