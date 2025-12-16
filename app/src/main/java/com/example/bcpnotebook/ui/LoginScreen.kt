@@ -1,16 +1,12 @@
 package com.example.bcpnotebook.ui
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.*
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -25,75 +21,63 @@ fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(DeepSpace, Color.Black))),
-        contentAlignment = Alignment.Center
+    Column(
+        modifier = Modifier.fillMaxSize().background(DeepSpace).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-                .background(SurfaceDark.copy(alpha = 0.8f), RoundedCornerShape(24.dp))
-                .border(1.dp, NeonBlue.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Text("WELCOME BACK", color = NeonBlue, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(40.dp))
+
+        OutlinedTextField(
+            value = email, onValueChange = { email = it },
+            label = { Text("Email Address", color = GrayText) },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
+            colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = NeonBlue, unfocusedBorderColor = Color.Gray)
+        )
+        
+        Spacer(modifier = Modifier.height(15.dp))
+
+        OutlinedTextField(
+            value = password, onValueChange = { password = it },
+            label = { Text("Password", color = GrayText) },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White),
+            colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = NeonBlue, unfocusedBorderColor = Color.Gray)
+        )
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        Button(
+            onClick = { navController.navigate("notebook") },
+            modifier = Modifier.fillMaxWidth().height(55.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = NeonBlue),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Text(text = "WELCOME BACK", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = NeonBlue)
-            Spacer(modifier = Modifier.height(30.dp))
+            Text("LOGIN", color = Color.Black, fontWeight = FontWeight.Bold)
+        }
 
-            OutlinedTextField(
-                value = email, onValueChange = { email = it },
-                label = { Text("Email Address", color = Color.Gray) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = NeonBlue, unfocusedBorderColor = Color.Gray)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+        Text("OR", color = GrayText)
+        Spacer(modifier = Modifier.height(20.dp))
 
-            OutlinedTextField(
-                value = password, onValueChange = { password = it },
-                label = { Text("Password", color = Color.Gray) },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(focusedBorderColor = NeonBlue, unfocusedBorderColor = Color.Gray)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { navController.navigate("notebook") },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = NeonBlue),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("LOGIN", fontWeight = FontWeight.Bold, color = Color.Black)
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("OR", color = Color.Gray, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedButton(
-                onClick = { /* Logic */ },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(id = com.example.bcpnotebook.R.mipmap.ic_launcher),
-                        contentDescription = "Google",
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text("Continue with Google", color = Color.White)
-                }
-            }
-
-            TextButton(onClick = { navController.navigate("register") }) {
-                Text("Don't have an account? Sign Up", color = Color.Gray)
+        OutlinedButton(
+            onClick = { /* Logic */ },
+            modifier = Modifier.fillMaxWidth().height(55.dp),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // গুগল আইকন
+                Image(
+                    painter = painterResource(id = com.example.bcpnotebook.R.drawable.google_icon),
+                    contentDescription = "Google",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Continue with Google", color = Color.White)
             }
         }
     }

@@ -1,76 +1,36 @@
 package com.example.bcpnotebook.ui
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.*
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import com.example.bcpnotebook.ui.theme.*
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController) {
-    val scale = remember { Animatable(0f) }
-    
     LaunchedEffect(key1 = true) {
-        scale.animateTo(
-            targetValue = 1.0f,
-            animationSpec = tween(durationMillis = 1000)
-        )
         delay(2500)
-        navController.navigate("login") {
-            popUpTo("splash") { inclusive = true }
-        }
+        navController.navigate("login") { popUpTo("splash") { inclusive = true } }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(DeepSpace, Color.Black))),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = Modifier.fillMaxSize().background(DeepSpace), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // R এর ঝামেলা এড়াতে আমরা সরাসরি Resource ID ব্যবহার করছি না, 
-            // বরং সঠিক Painter নিশ্চিত করছি।
             Image(
                 painter = painterResource(id = com.example.bcpnotebook.R.mipmap.ic_launcher),
                 contentDescription = "Logo",
-                modifier = Modifier.size(150.dp).scale(scale.value)
+                modifier = Modifier.size(150.dp) // সাইজ বাড়ানো হয়েছে ক্লারিটির জন্য
             )
-            Spacer(modifier = Modifier.height(15.dp))
-            Text(
-                text = "BCP NOTEBOOK",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = NeonBlue,
-                letterSpacing = 4.sp
-            )
-        }
-
-        Column(
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 50.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "DEVELOPED BY", fontSize = 10.sp, color = Color.Gray, letterSpacing = 2.sp)
-            Text(text = "cybernahid-dev", fontSize = 16.sp, color = Color.White, fontWeight = FontWeight.Light)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Team Bangladesh Cyber Panthers (BCP)",
-                fontSize = 12.sp,
-                color = NeonBlue,
-                fontWeight = FontWeight.Bold
-            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Text("BCP NOTEBOOK", color = NeonBlue, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+            Text("developed by cybernahid-dev", color = GrayText, fontSize = 12.sp)
         }
     }
 }
