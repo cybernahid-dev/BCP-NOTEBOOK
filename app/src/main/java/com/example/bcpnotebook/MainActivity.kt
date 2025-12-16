@@ -8,13 +8,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.bcpnotebook.ui.*
-import com.example.bcpnotebook.ui.theme.BCPNotebookTheme
+import androidx.compose.material3.MaterialTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            BCPNotebookTheme {
+            // ম্যানিফেস্ট অনুযায়ী ডিফল্ট থিম স্ট্রাকচার ব্যবহার করছি
+            MaterialTheme {
                 AppNavigation()
             }
         }
