@@ -7,18 +7,22 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.bcpnotebook.ui.*
-import com.google.firebase.FirebaseApp
+import com.example.bcpnotebook.ui.theme.BCPNotebookTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        FirebaseApp.initializeApp(this)
         setContent {
-            val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "login") {
-                composable("login") { LoginScreen(navController) }
-                composable("register") { RegisterScreen(navController) }
-                composable("notebook") { NotebookScreen(navController) }
+            BCPNotebookTheme {
+                val navController = rememberNavController()
+                // startDestination set kora holo splash screen e
+                NavHost(navController = navController, startDestination = "splash") {
+                    composable("splash") { SplashScreen(navController) }
+                    composable("login") { LoginScreen(navController) }
+                    composable("register") { RegisterScreen(navController) }
+                    composable("notebook") { NotebookScreen(navController) }
+                    composable("add_note") { AddNoteScreen(navController) }
+                }
             }
         }
     }
