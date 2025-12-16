@@ -3,33 +3,27 @@ package com.example.bcpnotebook
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import com.example.bcpnotebook.ui.*
-import androidx.compose.material3.MaterialTheme
+import com.example.bcpnotebook.ui.theme.BCPNotebookTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            // ম্যানিফেস্ট অনুযায়ী ডিফল্ট থিম স্ট্রাকচার ব্যবহার করছি
-            MaterialTheme {
-                AppNavigation()
+            BCPNotebookTheme {
+                val navController = rememberNavController()
+                // চেক করা হচ্ছে ইউজার কি আগে থেকেই লগইন করা কি না
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val startDest = if (currentUser != null) "notebook" else "login"
+
+                NavHost(navController = navController, startDestination = startDest) {
+                    composable("login") { LoginScreen(navController) }
+                    composable("notebook") { NotebookScreen(navController) }
+                    composable("add_note") { AddNoteScreen(navController) }
+                }
             }
         }
-    }
-}
-
-@Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "splash") {
-        composable("splash") { SplashScreen(navController) }
-        composable("login") { LoginScreen(navController) }
-        composable("register") { RegisterScreen(navController) }
-        composable("notebook") { NotebookScreen(navController) }
-        composable("add_note") { AddNoteScreen(navController) }
     }
 }

@@ -5,22 +5,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = NeonBlue,
-    background = DeepSpace,
-    surface = SurfaceDark,
-    onPrimary = Color.Black,
-    onBackground = Color.White,
-    onSurface = Color.White
+private val LightColorScheme = lightColorScheme(
+    primary = Color(0xFF4A90E2), // ছবির সেই সুন্দর নীল কালার
+    background = Color(0xFFF0F4F8), // হালকা গ্রে-হোয়াইট ব্যাকগ্রাউন্ড
+    surface = Color.White,
+    onPrimary = Color.White,
+    onBackground = Color(0xFF333333)
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF007A8A), // ডার্ক নিওনের একটু হালকা ভার্সন
-    background = Color.White,
-    surface = Color(0xFFF5F5F5),
+private val DarkColorScheme = darkColorScheme(
+    primary = Color(0xFF4A90E2),
+    background = Color(0xFF121212),
+    surface = Color(0xFF1E1E1E),
     onPrimary = Color.White,
-    onBackground = Color.Black,
-    onSurface = Color.Black
+    onBackground = Color.White
 )
 
 @Composable
@@ -29,9 +27,5 @@ fun BCPNotebookTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        content = content
-    )
+    MaterialTheme(colorScheme = colorScheme, content = content)
 }
