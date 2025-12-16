@@ -1,36 +1,44 @@
 package com.example.bcpnotebook.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import com.example.bcpnotebook.ui.theme.*
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(navController: NavController) {
-    LaunchedEffect(key1 = true) {
-        delay(2500)
-        navController.navigate("login") { popUpTo("splash") { inclusive = true } }
+    LaunchedEffect(Unit) {
+        delay(2500) // ২.৫ সেকেন্ড পর লগইন পেজে যাবে
+        navController.navigate("login") {
+            popUpTo("splash") { inclusive = true }
+        }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(DeepSpace), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier.fillMaxSize().background(BackgroundLight),
+        contentAlignment = Alignment.Center
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(id = com.example.bcpnotebook.R.mipmap.ic_launcher),
-                contentDescription = "Logo",
-                modifier = Modifier.size(150.dp) // সাইজ বাড়ানো হয়েছে ক্লারিটির জন্য
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Text("BCP NOTEBOOK", color = NeonBlue, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-            Text("developed by cybernahid-dev", color = GrayText, fontSize = 12.sp)
+            Text("BCP NOTEBOOK", fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = SoftBlue)
+            Text("Your Digital Cornell Workspace", fontSize = 14.sp, color = TextSecondary)
+            Spacer(modifier = Modifier.height(100.dp))
+            CircularProgressIndicator(color = SoftBlue, strokeWidth = 2.dp)
+        }
+        
+        Column(
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("developed by cybernahid-dev", fontSize = 12.sp, color = TextSecondary)
+            Text("Team Bangladesh Cyber Panthers (BCP)", fontSize = 12.sp, color = SoftBlue, fontWeight = FontWeight.Bold)
         }
     }
 }

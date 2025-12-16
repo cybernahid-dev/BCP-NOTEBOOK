@@ -14,12 +14,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             BCPNotebookTheme {
                 val navController = rememberNavController()
-                // চেক করা হচ্ছে ইউজার কি আগে থেকেই লগইন করা কি না
                 val currentUser = FirebaseAuth.getInstance().currentUser
-                val startDest = if (currentUser != null) "notebook" else "login"
-
-                NavHost(navController = navController, startDestination = startDest) {
+                
+                // ল্যান্ডিং পেজ থেকে শুরু হবে
+                NavHost(navController = navController, startDestination = "splash") {
+                    composable("splash") { SplashScreen(navController) }
                     composable("login") { LoginScreen(navController) }
+                    composable("registration") { RegistrationScreen(navController) }
                     composable("notebook") { NotebookScreen(navController) }
                     composable("add_note") { AddNoteScreen(navController) }
                 }
