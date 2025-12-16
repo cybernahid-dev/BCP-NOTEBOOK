@@ -1,63 +1,91 @@
 package com.example.bcpnotebook.ui
 
-import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.bcpnotebook.viewmodel.AuthViewModel
+import com.example.bcpnotebook.ui.theme.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = viewModel()) {
+fun RegisterScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val authState by viewModel.authState.collectAsState()
-    val context = LocalContext.current
 
-    LaunchedEffect(authState) {
-        val state = authState // স্মার্ট কাস্টের জন্য লোকাল ভ্যারিয়েবল
-        if (state != null && state.contains("Registration Successful")) {
-            Toast.makeText(context, state, Toast.LENGTH_LONG).show()
-            navController.popBackStack() 
-            viewModel.resetState()
-        } else if (state != null) {
-            Toast.makeText(context, state, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(DeepSpace, Color.Black))),
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = "Create Account", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(32.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+                .background(SurfaceDark.copy(alpha = 0.8f), RoundedCornerShape(24.dp))
+                .border(1.dp, CyberPink.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "CREATE ACCOUNT",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = NeonBlue,
+                letterSpacing = 2.sp
+            )
+            Spacer(modifier = Modifier.height(30.dp))
 
-        OutlinedTextField(
-            value = email, onValueChange = { email = it },
-            label = { Text("Email") }, modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email", color = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = NeonBlue,
+                    unfocusedBorderColor = Color.Gray
+                )
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-            value = password, onValueChange = { password = it },
-            label = { Text("Password") }, visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("Create Password", color = Color.Gray) },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    focusedBorderColor = NeonBlue,
+                    unfocusedBorderColor = Color.Gray
+                )
+            )
+            Spacer(modifier = Modifier.height(30.dp))
 
-        Button(onClick = { viewModel.register(email, password) }, modifier = Modifier.fillMaxWidth()) {
-            Text("Register")
-        }
+            Button(
+                onClick = { /* ViewModel logic should be here */ },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = NeonBlue),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("REGISTER", fontWeight = FontWeight.Bold, color = Color.Black)
+            }
 
-        TextButton(onClick = { navController.popBackStack() }) {
-            Text("Already have an account? Login")
+            TextButton(onClick = { navController.navigate("login") }) {
+                Text("Already have an account? Login", color = Color.Gray)
+            }
         }
     }
 }
