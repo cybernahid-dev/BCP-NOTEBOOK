@@ -27,13 +27,8 @@ fun SplashScreen(navController: NavController) {
     
     LaunchedEffect(key1 = true) {
         scale.animateTo(
-            targetValue = 1.2f,
-            animationSpec = tween(durationMillis = 1000, easing = { t ->
-                var tVal = t
-                tVal -= 1.0f
-                val tension = 2f
-                tVal * tVal * ((tension + 1) * tVal + tension) + 1.0f
-            })
+            targetValue = 1.0f,
+            animationSpec = tween(durationMillis = 1000)
         )
         delay(2000)
         navController.navigate("login") {
@@ -48,8 +43,9 @@ fun SplashScreen(navController: NavController) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // সরাসরি R.drawable ব্যবহার করা হয়েছে
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = com.example.bcpnotebook.R.drawable.ic_launcher_foreground),
                 contentDescription = "Logo",
                 modifier = Modifier.size(180.dp).scale(scale.value)
             )
