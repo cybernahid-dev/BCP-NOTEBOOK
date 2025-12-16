@@ -108,7 +108,7 @@ BCP-Notebook/ ├── app/ │   ├── ui/ │   │   ├── SplashScr
 
 ## 🔐 Firestore Security Rules
 
-```js
+js
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
