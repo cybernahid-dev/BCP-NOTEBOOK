@@ -8,7 +8,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -29,7 +28,7 @@ fun SplashScreen(navController: NavController) {
             targetValue = 1.0f,
             animationSpec = tween(durationMillis = 1000)
         )
-        delay(2000)
+        delay(2500)
         navController.navigate("login") {
             popUpTo("splash") { inclusive = true }
         }
@@ -42,10 +41,9 @@ fun SplashScreen(navController: NavController) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // R এর পরিবর্তে সরাসরি android.R বা রিসোর্স আইডি ট্রাই না করে 
-            // আমরা জেনেরিক ড্রয়েবল রেফারেন্স ব্যবহার করছি
+            // এবার সরাসরি আপনার প্রোজেক্টের আসল লোগো ব্যবহার করা হয়েছে
             Image(
-                painter = painterResource(id = androidx.core.R.drawable.notification_bg_low), // Temporary fix to check build
+                painter = painterResource(id = com.example.bcpnotebook.R.drawable.ic_launcher_foreground),
                 contentDescription = "Logo",
                 modifier = Modifier.size(180.dp).scale(scale.value)
             )
