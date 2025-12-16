@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -25,13 +26,13 @@ fun AddNoteScreen(navController: NavController) {
             value = title, onValueChange = { title = it },
             placeholder = { Text("Title / Topic", color = GrayText) },
             modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, textColor = NeonBlue)
+            textStyle = androidx.compose.ui.text.TextStyle(color = NeonBlue, fontSize = 20.sp, fontWeight = FontWeight.Bold),
+            colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
         )
         
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            // Cues Section (Left)
             OutlinedTextField(
                 value = cues, onValueChange = { cues = it },
                 label = { Text("Cues / Keywords", fontSize = 10.sp) },
@@ -39,7 +40,6 @@ fun AddNoteScreen(navController: NavController) {
                 textStyle = androidx.compose.ui.text.TextStyle(color = Color.White)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            // Main Notes Section (Right)
             OutlinedTextField(
                 value = notes, onValueChange = { notes = it },
                 label = { Text("Main Notes / Details") },
@@ -50,7 +50,6 @@ fun AddNoteScreen(navController: NavController) {
         
         Spacer(modifier = Modifier.height(10.dp))
         
-        // Summary Section (Bottom)
         OutlinedTextField(
             value = summary, onValueChange = { summary = it },
             label = { Text("Summary (Briefly review main points)") },

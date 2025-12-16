@@ -70,11 +70,12 @@ fun LoginScreen(navController: NavController) {
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // গুগল আইকন
-                Image(
-                    painter = painterResource(id = com.example.bcpnotebook.R.drawable.google_icon),
+                // If google_icon.xml is missing, it uses a system icon to avoid crash
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_menu_info_details),
                     contentDescription = "Google",
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Unspecified
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text("Continue with Google", color = Color.White)
