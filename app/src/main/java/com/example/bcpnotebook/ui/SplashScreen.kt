@@ -17,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.bcpnotebook.R
 import com.example.bcpnotebook.ui.theme.*
 import kotlinx.coroutines.delay
 
@@ -43,9 +42,10 @@ fun SplashScreen(navController: NavController) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // সরাসরি R.drawable ব্যবহার করা হয়েছে
+            // R এর পরিবর্তে সরাসরি android.R বা রিসোর্স আইডি ট্রাই না করে 
+            // আমরা জেনেরিক ড্রয়েবল রেফারেন্স ব্যবহার করছি
             Image(
-                painter = painterResource(id = com.example.bcpnotebook.R.drawable.ic_launcher_foreground),
+                painter = painterResource(id = androidx.core.R.drawable.notification_bg_low), // Temporary fix to check build
                 contentDescription = "Logo",
                 modifier = Modifier.size(180.dp).scale(scale.value)
             )
