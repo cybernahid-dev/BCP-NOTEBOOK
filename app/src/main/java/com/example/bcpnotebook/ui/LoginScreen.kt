@@ -35,9 +35,8 @@ fun LoginScreen(navController: NavController) {
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    // GoogleAuthManager থেকে আইডি নিয়ে কনফিগারেশন
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken(context.getString(com.example.bcpnotebook.R.string.default_web_client_id)) 
+        .requestIdToken(context.getString(com.example.bcpnotebook.R.string.default_web_client_id))
         .requestEmail()
         .build()
     val googleSignInClient = GoogleSignIn.getClient(context as Activity, gso)
@@ -49,18 +48,23 @@ fun LoginScreen(navController: NavController) {
                 val account = task.getResult(ApiException::class.java)!!
                 val credential = GoogleAuthProvider.getCredential(account.idToken, null)
                 
+                // ইন্টারনেট চেক করে ফায়ারবেসে লগইন
                 if (NetworkUtils.isInternetAvailable(context)) {
+                    isLoading = true
                     auth.signInWithCredential(credential).addOnCompleteListener { authTask ->
+                        isLoading = false
                         if (authTask.isSuccessful) {
                             Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
                             navController.navigate("notebook") { popUpTo("login") { inclusive = true } }
+                        } else {
+                            Toast.makeText(context, "Authentication Failed", Toast.LENGTH_SHORT).show()
                         }
                     }
                 } else {
                     Toast.makeText(context, "No Internet Connection!", Toast.LENGTH_LONG).show()
                 }
             } catch (e: ApiException) {
-                Toast.makeText(context, "Login Cancelled or Error: ${e.statusCode}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Login Cancelled", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -75,7 +79,7 @@ fun LoginScreen(navController: NavController) {
 
         OutlinedTextField(
             value = email, onValueChange = { email = it },
-            label = { Text("Email Address") },
+            label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
@@ -87,24 +91,25 @@ fun LoginScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
+        
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
-                if (NetworkUtils.isInternetAvailable(context)) {
-                    if (email.isNotEmpty() && password.isNotEmpty()) {
-                        isLoading = true
-                        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
-                            isLoading = false
-                            if (it.isSuccessful) {
-                                Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
-                                navController.navigate("notebook") { popUpTo("login") { inclusive = true } }
-                            } else {
-                                Toast.makeText(context, "Error: ${it.exception?.message}", Toast.LENGTH_SHORT).show()
-                            }
+                if (!NetworkUtils.isInternetAvailable(context)) {
+                    Toast.makeText(context, "Internet connection needed!", Toast.LENGTH_LONG).show()
+                } else if (email.isNotEmpty() && password.isNotEmpty()) {
+                    isLoading = true
+                    auth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
+                        isLoading = false
+                        if (it.isSuccessful) {
+                            Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                            navController.navigate("notebook") { popUpTo("login") { inclusive = true } }
+                        } else {
+                            Toast.makeText(context, "Invalid Login Details", Toast.LENGTH_SHORT).show()
                         }
-                    } else Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
-                } else Toast.makeText(context, "Internet connection needed!", Toast.LENGTH_LONG).show()
+                    }
+                }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(12.dp),
@@ -126,10 +131,8 @@ fun LoginScreen(navController: NavController) {
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Continue with Google", color = TextPrimary, fontWeight = FontWeight.SemiBold)
+            Text("Continue with Google", color = TextPrimary)
         }
-
-        Spacer(modifier = Modifier.height(20.dp))
 
         TextButton(onClick = { navController.navigate("registration") }) {
             Text("Don't have an account? Sign Up", color = SoftBlue, fontWeight = FontWeight.Bold)
