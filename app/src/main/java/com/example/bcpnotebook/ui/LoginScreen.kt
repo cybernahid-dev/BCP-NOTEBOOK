@@ -1,6 +1,7 @@
 package com.example.bcpnotebook.ui
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -20,6 +21,7 @@ import androidx.navigation.NavController
 import com.example.bcpnotebook.ui.theme.*
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +30,6 @@ fun LoginScreen(navController: NavController) {
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    // গুগল লগইন কনফিগারেশন
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestEmail()
         .build()
@@ -37,9 +38,20 @@ fun LoginScreen(navController: NavController) {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            // লগইন সফল হলে সরাসরি নোটবুক স্ক্রিনে নিয়ে যাবে
-            navController.navigate("notebook")
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.getResult(ApiException::class.java)
+            if (account != null) {
+                // ১. সফলতার মেসেজ দেখানো
+                Toast.makeText(context, "Login Successful! Welcome ${account.displayName}", Toast.LENGTH_SHORT).show()
+                
+                // ২. অটোমেটিক নোটবুক স্ক্রিনে নিয়ে যাওয়া
+                navController.navigate("notebook") {
+                    popUpTo("login") { inclusive = true } // লগইন পেজ স্ট্যাক থেকে সরিয়ে দেওয়া
+                }
+            }
+        } catch (e: ApiException) {
+            Toast.makeText(context, "Login Failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -73,7 +85,10 @@ fun LoginScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(30.dp))
 
         Button(
-            onClick = { navController.navigate("notebook") },
+            onClick = { 
+                Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                navController.navigate("notebook") 
+            },
             modifier = Modifier.fillMaxWidth().height(55.dp),
             colors = ButtonDefaults.buttonColors(containerColor = NeonBlue),
             shape = RoundedCornerShape(12.dp)
