@@ -75,17 +75,16 @@ fun LoginScreen(navController: NavController) {
             Text("OR", color = Color.Gray, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Google Button
             OutlinedButton(
-                onClick = { /* Handle Google Login */ },
+                onClick = { /* Logic */ },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(12.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
-                        painter = painterResource(id = com.example.bcpnotebook.R.drawable.ic_launcher_foreground), // আপনার লোগোটিই গুগল লোগো হিসেবে টেম্পোরারি দেখাচ্ছি যাতে এরর না দেয়
-                        contentDescription = "Google Logo",
+                        painter = painterResource(id = com.example.bcpnotebook.R.mipmap.ic_launcher),
+                        contentDescription = "Google",
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))

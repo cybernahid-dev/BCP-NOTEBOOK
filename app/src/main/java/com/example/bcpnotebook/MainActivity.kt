@@ -3,6 +3,7 @@ package com.example.bcpnotebook
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -14,16 +15,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             BCPNotebookTheme {
-                val navController = rememberNavController()
-                // startDestination set kora holo splash screen e
-                NavHost(navController = navController, startDestination = "splash") {
-                    composable("splash") { SplashScreen(navController) }
-                    composable("login") { LoginScreen(navController) }
-                    composable("register") { RegisterScreen(navController) }
-                    composable("notebook") { NotebookScreen(navController) }
-                    composable("add_note") { AddNoteScreen(navController) }
-                }
+                AppNavigation()
             }
         }
+    }
+}
+
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "splash") {
+        composable("splash") { SplashScreen(navController) }
+        composable("login") { LoginScreen(navController) }
+        composable("register") { RegisterScreen(navController) }
+        composable("notebook") { NotebookScreen(navController) }
+        composable("add_note") { AddNoteScreen(navController) }
     }
 }
