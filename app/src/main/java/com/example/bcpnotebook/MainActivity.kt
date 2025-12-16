@@ -12,11 +12,10 @@ import com.google.firebase.FirebaseApp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        FirebaseApp.initializeApp(this) // Firebase Init
+        FirebaseApp.initializeApp(this)
         setContent {
             val navController = rememberNavController()
-            NavHost(navController = navController, startDestination = "splash") {
-                composable("splash") { SplashScreen(navController) }
+            NavHost(navController = navController, startDestination = "login") {
                 composable("login") { LoginScreen(navController) }
                 composable("register") { RegisterScreen(navController) }
                 composable("notebook") { NotebookScreen(navController) }

@@ -21,13 +21,13 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
     val context = LocalContext.current
 
     LaunchedEffect(authState) {
-        if (authState != null && authState.contains("Registration Successful")) {
-            // সফল হলে লগইন স্ক্রিনে ফিরিয়ে দেওয়া হয়
-            Toast.makeText(context, authState, Toast.LENGTH_LONG).show()
+        val state = authState // লোকাল ভ্যারিয়েবলে নেওয়া হলো স্মার্ট কাস্টের জন্য
+        if (state != null && state.contains("Registration Successful")) {
+            Toast.makeText(context, state, Toast.LENGTH_LONG).show()
             navController.popBackStack() 
             viewModel.resetState()
-        } else if (authState != null) {
-            Toast.makeText(context, authState, Toast.LENGTH_SHORT).show()
+        } else if (state != null) {
+            Toast.makeText(context, state, Toast.LENGTH_SHORT).show()
         }
     }
 
