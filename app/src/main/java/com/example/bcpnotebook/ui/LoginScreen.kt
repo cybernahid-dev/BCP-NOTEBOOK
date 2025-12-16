@@ -1,5 +1,8 @@
 package com.example.bcpnotebook.ui
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -14,12 +18,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.bcpnotebook.ui.theme.*
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    // গুগল লগইন কনফিগারেশন
+    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        .requestEmail()
+        .build()
+    val googleSignInClient = GoogleSignIn.getClient(context as Activity, gso)
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // লগইন সফল হলে সরাসরি নোটবুক স্ক্রিনে নিয়ে যাবে
+            navController.navigate("notebook")
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().background(DeepSpace).padding(24.dp),
@@ -64,13 +86,12 @@ fun LoginScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(20.dp))
 
         OutlinedButton(
-            onClick = { /* Logic */ },
+            onClick = { launcher.launch(googleSignInClient.signInIntent) },
             modifier = Modifier.fillMaxWidth().height(55.dp),
             shape = RoundedCornerShape(12.dp),
             border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // If google_icon.xml is missing, it uses a system icon to avoid crash
                 Icon(
                     painter = painterResource(id = android.R.drawable.ic_menu_info_details),
                     contentDescription = "Google",
