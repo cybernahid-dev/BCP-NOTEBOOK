@@ -28,7 +28,12 @@ fun SplashScreen(navController: NavController) {
     LaunchedEffect(key1 = true) {
         scale.animateTo(
             targetValue = 1.2f,
-            animationSpec = tween(durationMillis = 1000, easing = { OvershootInterpolator(2f).getInterpolation(it) })
+            animationSpec = tween(durationMillis = 1000, easing = { t ->
+                var tVal = t
+                tVal -= 1.0f
+                val tension = 2f
+                tVal * tVal * ((tension + 1) * tVal + tension) + 1.0f
+            })
         )
         delay(2000)
         navController.navigate("login") {
@@ -72,14 +77,5 @@ fun SplashScreen(navController: NavController) {
                 fontWeight = FontWeight.Bold
             )
         }
-    }
-}
-
-// Helper for animation
-class OvershootInterpolator(val tension: Float) {
-    fun getInterpolation(t: Float): Float {
-        var t = t
-        t -= 1.0f
-        return t * t * ((tension + 1) * t + tension) + 1.0f
     }
 }

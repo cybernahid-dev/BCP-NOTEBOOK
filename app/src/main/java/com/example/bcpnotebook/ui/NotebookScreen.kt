@@ -1,10 +1,10 @@
 package com.example.bcpnotebook.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -37,14 +37,17 @@ fun NotebookScreen(navController: NavController) {
             Text("Your Digital Cornell Workspace", color = Color.Gray, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(20.dp))
             
-            // Placeholder for Futuristic Card
             Card(
                 modifier = Modifier.fillMaxWidth().height(150.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceDark)
             ) {
                 Box(Modifier.fillMaxSize().padding(20.dp)) {
-                    Text("No notes here yet", color = NeonBlue.copy(alpha = 0.5f), modifier = Modifier.align(Alignment.Center))
+                    Text(
+                        "No notes here yet", 
+                        color = NeonBlue.copy(alpha = 0.5f), 
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
             }
         }
