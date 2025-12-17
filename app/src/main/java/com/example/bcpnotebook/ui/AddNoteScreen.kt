@@ -1,11 +1,22 @@
 package com.example.bcpnotebook.ui
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ContentValues
-import android.graphics.Paint
-import android.graphics.pdf.PdfDocument
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -13,6 +24,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FormatAlignCenter
+import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
+import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,63 +52,105 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import com.example.bcpnotebook.R
 import com.example.bcpnotebook.model.Note
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import java.io.FileOutputStream
+import android.graphics.pdf.PdfDocument as AndroidPdfDocument
 
-private fun createPdfFromContent(title: String, content: AnnotatedString, context: android.content.Context) {
-    if (title.isBlank()) { Toast.makeText(context, "Please enter a title before exporting.", Toast.LENGTH_SHORT).show(); return }
-    val document = PdfDocument()
-    val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-    val page = document.startPage(pageInfo)
-    val canvas = page.canvas; val paint = Paint(); var yPosition = 40f
-    val leftMargin = 40f; val rightMargin = 595 - 40f
-    paint.textSize = 24f; paint.isFakeBoldText = true
-    canvas.drawText(title, leftMargin, yPosition, paint); yPosition += 50f
-    paint.isFakeBoldText = false; paint.textSize = 12f
-    content.spanStyles.forEach { (style, start, end) ->
-        val textPart = content.text.substring(start, end)
-        paint.color = style.color.toArgb()
-        paint.isFakeBoldText = style.fontWeight == FontWeight.Bold
-        paint.isUnderlineText = style.textDecoration == TextDecoration.Underline
-        paint.fontFeatureSettings = if (style.fontStyle == FontStyle.Italic) "italic" else "normal"
-        var currentLine = ""
-        textPart.split(" ").forEach { word ->
-            if (paint.measureText(" ") < (rightMargin - leftMargin)) currentLine += " "
-            else { canvas.drawText(currentLine, leftMargin, yPosition, paint); yPosition += paint.fontSpacing; currentLine = " " }
-        }
-        canvas.drawText(currentLine, leftMargin, yPosition, paint); yPosition += paint.fontSpacing
+// Helper functions remain the same...
+private fun toggleSpanStyle(textFieldValue: TextFieldValue, style: SpanStyle): TextFieldValue {
+    val selection = textFieldValue.selection
+    if (selection.collapsed) return textFieldValue
+    val existingStyles = textFieldValue.annotatedString.getSpanStyles(selection.start, selection.end)
+    val hasStyle = existingStyles.any {
+        (style.fontWeight != null && it.item.fontWeight == style.fontWeight) ||
+        (style.fontStyle != null && it.item.fontStyle == style.fontStyle) ||
+        (style.textDecoration != null && it.item.textDecoration == style.textDecoration)
     }
+    val newString = buildAnnotatedString {
+        append(textFieldValue.annotatedString)
+        if (hasStyle) {
+            val newStyle = SpanStyle(fontWeight = if (style.fontWeight != null) FontWeight.Normal else null, fontStyle = if (style.fontStyle != null) FontStyle.Normal else null, textDecoration = if (style.textDecoration != null) TextDecoration.None else null)
+            addStyle(newStyle, selection.start, selection.end)
+        } else { addStyle(style, selection.start, selection.end) }
+    }
+    return textFieldValue.copy(annotatedString = newString)
+}
+
+private fun createPdfFromContent(title: String, content: AnnotatedString, context: Context) {
+    if (title.isBlank()) { Toast.makeText(context, "Please enter a title.", Toast.LENGTH_SHORT).show(); return }
+    val document = AndroidPdfDocument()
+    val pageInfo = AndroidPdfDocument.PageInfo.Builder(595, 842, 1).create()
+    val page = document.startPage(pageInfo)
+    val canvas = page.canvas
+    val textPaint = TextPaint()
+    val leftMargin = 72f; val rightMargin = 595 - 72f
+    val pageW = (rightMargin - leftMargin).toInt()
+    var yPosition = 72f
+    textPaint.textSize = 24f; textPaint.isFakeBoldText = true
+    canvas.drawText(title, leftMargin, yPosition, textPaint); yPosition += 40
+    val staticLayout = StaticLayout.Builder.obtain(content, 0, content.length, textPaint, pageW).build()
+    canvas.save(); canvas.translate(leftMargin, yPosition); staticLayout.draw(canvas); canvas.restore()
     document.finishPage(page)
     val fileName = "${title.replace(" ", "_")}_${System.currentTimeMillis()}.pdf"
-    val contentValues = ContentValues().apply {
-        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-        put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-    }
+    val contentValues = ContentValues().apply { put(MediaStore.MediaColumns.DISPLAY_NAME, fileName); put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf"); put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS) }
     val resolver = context.contentResolver
     val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
     if (uri != null) {
-        try { resolver.openOutputStream(uri).use { document.writeTo(it); Toast.makeText(context, "PDF saved to Downloads!", Toast.LENGTH_LONG).show() }
-        } catch (e: Exception) { Toast.makeText(context, "Error saving PDF: ${e.message}", Toast.LENGTH_LONG).show() }
+        try { resolver.openOutputStream(uri).use { document.writeTo(it) }; showDownloadNotification(context, title, uri)
+        } catch (e: Exception) { Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show() }
     }
     document.close()
 }
 
-fun applyStyleToSelection(textFieldValue: TextFieldValue, style: SpanStyle): TextFieldValue {
-    val selection = textFieldValue.selection
-    if (!selection.collapsed) {
-        return textFieldValue.copy(annotatedString = buildAnnotatedString { append(textFieldValue.annotatedString); addStyle(style, selection.start, selection.end) })
+private fun showDownloadNotification(context: Context, title: String, uri: android.net.Uri) {
+    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    val channelId = "pdf_download_channel"
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val channel = NotificationChannel(channelId, "PDF Downloads", NotificationManager.IMPORTANCE_HIGH)
+        notificationManager.createNotificationChannel(channel)
     }
-    return textFieldValue
+    val intent = Intent(Intent.ACTION_VIEW).apply { setDataAndType(uri, "application/pdf"); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+    val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    val notification = NotificationCompat.Builder(context, channelId)
+        .setSmallIcon(R.drawable.ic_launcher_foreground)
+        .setContentTitle("PDF Saved Successfully")
+        .setContentText("'$title.pdf' saved to Downloads.")
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setContentIntent(pendingIntent)
+        .setAutoCancel(true)
+        .build()
+    notificationManager.notify(1, notification)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNoteScreen(navController: NavController) {
     val context = LocalContext.current
+    // =================== নতুন কোড শুরু (পারমিশন চাওয়ার জন্য) ===================
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (!isGranted) {
+                Toast.makeText(context, "Notification permission denied. You won't get download alerts.", Toast.LENGTH_LONG).show()
+            }
+        }
+    )
+
+    // স্ক্রিনটি লোড হওয়ার সাথে সাথে পারমিশন চাইবে
+    LaunchedEffect(key1 = true) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+    // =================== নতুন কোড শেষ ===================
+
     val firestore = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     var title by remember { mutableStateOf("") }
@@ -102,20 +158,16 @@ fun AddNoteScreen(navController: NavController) {
     var cues by remember { mutableStateOf("") }
     var summary by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var isBold by remember { mutableStateOf(false) }
-    var isItalic by remember { mutableStateOf(false) }
-    var isUnderlined by remember { mutableStateOf(false) }
     var textAlign by remember { mutableStateOf(TextAlign.Start) }
     var isFontMenuExpanded by remember { mutableStateOf(false) }
     var isColorMenuExpanded by remember { mutableStateOf(false) }
-    var selectedFontFamily by remember { mutableStateOf(FontFamily.Default) }
+    var selectedFontInfo by remember { mutableStateOf(appFonts.first()) }
     var scale by remember { mutableStateOf(1f) }
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
     val paperColor = Color(0xFFFCF5E5)
     val lineBlue = Color(0xFFD1E4EC)
     val marginRed = Color(0xFFFF9999)
-    val fontFamilies = listOf(FontFamily.Default, FontFamily.Serif, FontFamily.Cursive, FontFamily.Monospace)
     val textColors = listOf(Color.Black, Color.Red, Color.Blue, Color.Green, Color(0xFF9C27B0))
 
     Scaffold(modifier = Modifier.fillMaxSize().imePadding(), bottomBar = {
@@ -124,11 +176,11 @@ fun AddNoteScreen(navController: NavController) {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     Box {
                         Button(onClick = { isFontMenuExpanded = true }, colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)) {
-                            Text(selectedFontFamily.javaClass.simpleName.replace("FontFamily", ""), color = Color.White)
+                            Text(selectedFontInfo.name, color = Color.White)
                             Icon(Icons.Default.ArrowDropDown, null, tint = Color.White)
                         }
                         DropdownMenu(expanded = isFontMenuExpanded, onDismissRequest = { isFontMenuExpanded = false }) {
-                            fontFamilies.forEach { font -> DropdownMenuItem(text = { Text(font.javaClass.simpleName.replace("FontFamily", "")) }, onClick = { selectedFontFamily = font; isFontMenuExpanded = false; notes = applyStyleToSelection(notes, SpanStyle(fontFamily = font)) }) }
+                            appFonts.forEach { fontInfo -> DropdownMenuItem(text = { Text(fontInfo.name, fontFamily = fontInfo.fontFamily) }, onClick = { selectedFontInfo = fontInfo; isFontMenuExpanded = false; notes = applyStyleToSelection(notes, SpanStyle(fontFamily = fontInfo.fontFamily)) }) }
                         }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -149,18 +201,18 @@ fun AddNoteScreen(navController: NavController) {
                 }
                 Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 4.dp))
                 Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                    IconButton(onClick = { isBold = !isBold; notes = applyStyleToSelection(notes, SpanStyle(fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal)) }, modifier = Modifier.background(if (isBold) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatBold, null, tint = Color.White) }
-                    IconButton(onClick = { isItalic = !isItalic; notes = applyStyleToSelection(notes, SpanStyle(fontStyle = if (isItalic) FontStyle.Italic else FontStyle.Normal)) }, modifier = Modifier.background(if (isItalic) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatItalic, null, tint = Color.White) }
-                    IconButton(onClick = { isUnderlined = !isUnderlined; notes = applyStyleToSelection(notes, SpanStyle(textDecoration = if (isUnderlined) TextDecoration.Underline else TextDecoration.None)) }, modifier = Modifier.background(if (isUnderlined) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatUnderlined, null, tint = Color.White) }
+                    IconButton(onClick = { notes = toggleSpanStyle(notes, SpanStyle(fontWeight = FontWeight.Bold)) }) { Icon(Icons.Default.FormatBold, null, tint = Color.White) }
+                    IconButton(onClick = { notes = toggleSpanStyle(notes, SpanStyle(fontStyle = FontStyle.Italic)) }) { Icon(Icons.Default.FormatItalic, null, tint = Color.White) }
+                    IconButton(onClick = { notes = toggleSpanStyle(notes, SpanStyle(textDecoration = TextDecoration.Underline)) }) { Icon(Icons.Default.FormatUnderlined, null, tint = Color.White) }
                     Box {
                         IconButton(onClick = { isColorMenuExpanded = true }) { Icon(Icons.Default.FormatColorText, null, tint = Color.White) }
                         DropdownMenu(expanded = isColorMenuExpanded, onDismissRequest = { isColorMenuExpanded = false }) {
                             Row(modifier = Modifier.padding(8.dp)) { textColors.forEach { color -> Box(modifier = Modifier.size(32.dp).padding(4.dp).clip(CircleShape).background(color).clickable { notes = applyStyleToSelection(notes, SpanStyle(color = color)); isColorMenuExpanded = false }) } }
                         }
                     }
-                    IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.Default.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
-                    IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.Default.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
-                    IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.Default.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.AutoMirrored.Filled.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.AutoMirrored.Filled.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.AutoMirrored.Filled.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
                 }
             }
         }
@@ -183,7 +235,7 @@ fun AddNoteScreen(navController: NavController) {
                 TextField(value = title, onValueChange = { title = it }, placeholder = { Text("Topic Title", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black.copy(0.4f)) }, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp), textStyle = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold), colors = textFieldColors)
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp).drawBehind { val marginX = size.width * 0.28f; drawLine(color = marginRed, start = Offset(marginX, 0f), end = Offset(marginX, size.height), strokeWidth = 2.dp.toPx()) }) {
                     Box(modifier = Modifier.weight(0.28f).padding(start = 12.dp)) { TextField(value = cues, onValueChange = { cues = it }, placeholder = { Text("CUES", fontWeight = FontWeight.Bold, color = marginRed.copy(0.8f), fontSize = 14.sp) }, colors = textFieldColors) }
-                    Box(modifier = Modifier.weight(0.72f).padding(start = 8.dp)) { TextField(value = notes, onValueChange = { notes = it }, placeholder = { Text("Take detailed notes here...") }, textStyle = TextStyle(fontSize = 18.sp, fontFamily = selectedFontFamily, lineHeight = 32.sp, textAlign = textAlign), modifier = Modifier.fillMaxWidth(), colors = textFieldColors) }
+                    Box(modifier = Modifier.weight(0.72f).padding(start = 8.dp)) { TextField(value = notes, onValueChange = { notes = it }, placeholder = { Text("Take detailed notes here...") }, textStyle = TextStyle(fontSize = 18.sp, fontFamily = selectedFontInfo.fontFamily, lineHeight = 32.sp, textAlign = textAlign), modifier = Modifier.fillMaxWidth(), colors = textFieldColors) }
                 }
                 Divider(color = marginRed, thickness = 2.dp)
                 Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 20.dp, vertical = 10.dp)) {

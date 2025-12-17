@@ -11,6 +11,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FormatAlignCenter
+import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
+import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,13 +50,11 @@ fun NoteDetailScreen(navController: NavController, noteId: String?) {
     var noteSummary by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var isBold by remember { mutableStateOf(false) }
-    var isItalic by remember { mutableStateOf(false) }
-    var isUnderlined by remember { mutableStateOf(false) }
     var textAlign by remember { mutableStateOf(TextAlign.Start) }
     var isColorMenuExpanded by remember { mutableStateOf(false) }
-    var selectedFontFamily by remember { mutableStateOf(FontFamily.Default) }
     val textColors = listOf(Color.Black, Color.Red, Color.Blue, Color.Green)
+    var selectedFontInfo by remember { mutableStateOf(appFonts.first()) }
+    var isFontMenuExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(noteId) {
         if (noteId != null) {
@@ -105,18 +106,18 @@ fun NoteDetailScreen(navController: NavController, noteId: String?) {
                 }
                 Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 4.dp))
                 Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
-                    IconButton(onClick = { isBold = !isBold; noteContent = applyStyleToSelection(noteContent, androidx.compose.ui.text.SpanStyle(fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal)) }, modifier = Modifier.background(if(isBold) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatBold, null, tint = Color.White) }
-                    IconButton(onClick = { isItalic = !isItalic; noteContent = applyStyleToSelection(noteContent, androidx.compose.ui.text.SpanStyle(fontStyle = if (isItalic) FontStyle.Italic else FontStyle.Normal)) }, modifier = Modifier.background(if(isItalic) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatItalic, null, tint = Color.White) }
-                    IconButton(onClick = { isUnderlined = !isUnderlined; noteContent = applyStyleToSelection(noteContent, androidx.compose.ui.text.SpanStyle(textDecoration = if (isUnderlined) TextDecoration.Underline else TextDecoration.None)) }, modifier = Modifier.background(if(isUnderlined) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatUnderlined, null, tint = Color.White) }
+                    IconButton(onClick = { noteContent = toggleSpanStyle(noteContent, androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)) }) { Icon(Icons.Default.FormatBold, null, tint = Color.White) }
+                    IconButton(onClick = { noteContent = toggleSpanStyle(noteContent, androidx.compose.ui.text.SpanStyle(fontStyle = FontStyle.Italic)) }) { Icon(Icons.Default.FormatItalic, null, tint = Color.White) }
+                    IconButton(onClick = { noteContent = toggleSpanStyle(noteContent, androidx.compose.ui.text.SpanStyle(textDecoration = TextDecoration.Underline)) }) { Icon(Icons.Default.FormatUnderlined, null, tint = Color.White) }
                     Box {
                         IconButton(onClick = { isColorMenuExpanded = true }) { Icon(Icons.Default.FormatColorText, null, tint = Color.White) }
                         DropdownMenu(expanded = isColorMenuExpanded, onDismissRequest = { isColorMenuExpanded = false }) {
                             Row(modifier = Modifier.padding(8.dp)) { textColors.forEach { color -> Box(modifier = Modifier.size(32.dp).padding(4.dp).clip(CircleShape).background(color).clickable { noteContent = applyStyleToSelection(noteContent, androidx.compose.ui.text.SpanStyle(color = color)); isColorMenuExpanded = false }) } }
                         }
                     }
-                    IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.Default.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
-                    IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.Default.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
-                    IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.Default.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.AutoMirrored.Filled.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.AutoMirrored.Filled.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.AutoMirrored.Filled.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
                 }
             }
         }
@@ -132,7 +133,7 @@ fun NoteDetailScreen(navController: NavController, noteId: String?) {
                 TextField(value = noteTitle, onValueChange = { noteTitle = it }, placeholder = { Text("Topic Title", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black.copy(0.4f)) }, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp), textStyle = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold), colors = textFieldColors)
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp).drawBehind { val marginRed = Color(0xFFFF9999); val marginX = size.width * 0.28f; drawLine(color = marginRed, start = Offset(marginX, 0f), end = Offset(marginX, size.height), strokeWidth = 2.dp.toPx()) }) {
                     Box(modifier = Modifier.weight(0.28f).padding(start = 12.dp)) { TextField(value = noteCues, onValueChange = { noteCues = it }, placeholder = { Text("CUES", fontWeight = FontWeight.Bold, color = Color(0xFFFF9999).copy(0.8f), fontSize = 14.sp) }, colors = textFieldColors) }
-                    Box(modifier = Modifier.weight(0.72f).padding(start = 8.dp)) { TextField(value = noteContent, onValueChange = { noteContent = it }, placeholder = { Text("Take detailed notes here...") }, textStyle = TextStyle(fontSize = 18.sp, fontFamily = selectedFontFamily, lineHeight = 32.sp, textAlign = textAlign), modifier = Modifier.fillMaxWidth(), colors = textFieldColors) }
+                    Box(modifier = Modifier.weight(0.72f).padding(start = 8.dp)) { TextField(value = noteContent, onValueChange = { noteContent = it }, placeholder = { Text("Take detailed notes here...") }, textStyle = TextStyle(fontSize = 18.sp, fontFamily = selectedFontInfo.fontFamily, lineHeight = 32.sp, textAlign = textAlign), modifier = Modifier.fillMaxWidth(), colors = textFieldColors) }
                 }
                 Divider(color = Color(0xFFFF9999), thickness = 2.dp)
                 Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 20.dp, vertical = 10.dp)) {
