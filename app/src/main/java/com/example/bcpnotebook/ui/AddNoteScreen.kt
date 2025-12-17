@@ -69,8 +69,11 @@ fun AddNoteScreen(navController: NavController) {
                             Toast.makeText(context, "Title and Notes are required", Toast.LENGTH_SHORT).show()
                         }
                     }) {
-                        if (isLoading) CircularProgressIndicator(size = 24.dp)
-                        else Icon(Icons.Default.Check, contentDescription = "Save")
+                        if (isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Check, contentDescription = "Save")
+                        }
                     }
                 }
             )
