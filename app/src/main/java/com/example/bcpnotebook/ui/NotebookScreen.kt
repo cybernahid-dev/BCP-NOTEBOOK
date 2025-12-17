@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -81,20 +83,20 @@ fun NotebookScreen(navController: NavController) {
         }
     }
 
-    // নোট দেখার পপআপ (Dialog)
     if (selectedNote != null) {
         AlertDialog(
             onDismissRequest = { selectedNote = null },
             title = { Text(selectedNote!!.title, fontWeight = FontWeight.Bold) },
             text = {
-                Column(modifier = androidx.compose.ui.Modifier.verticalScroll(rememberScrollState())) {
-                    Text("Cues:", fontWeight = FontWeight.Bold)
+                val scrollState = rememberScrollState()
+                Column(modifier = Modifier.verticalScroll(scrollState)) {
+                    Text("Cues:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     Text(selectedNote!!.cues)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Main Notes:", fontWeight = FontWeight.Bold)
+                    Text("Main Notes:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     Text(selectedNote!!.notes)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Summary:", fontWeight = FontWeight.Bold)
+                    Text("Summary:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     Text(selectedNote!!.summary)
                 }
             },
