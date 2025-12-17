@@ -18,30 +18,32 @@ jobs:
       - name: Make Gradlew Executable
         run: chmod +x gradlew
 
-      # ধাপ ১: SHA-1 এবং SHA-256 বের করা (যাতে আপনি ফায়ারবেসে অ্যাড করতে পারেন)
+      # গুরুত্বপূর্ণ: গিটহাব রানারে ডিবাগ কী তৈরি করা
+      - name: Generate Debug Keystore
+        run: |
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias AndroidDebugKey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      # এবার সাইনিং রিপোর্ট রান করলে SHA-1 পাওয়া যাবে
       - name: Get Signing Report
         run: ./gradlew signingReport
 
-      # ধাপ ২: অ্যান্ড্রয়েড APK বিল্ড করা
       - name: Build Android APK
         run: ./gradlew assembleDebug
 
-      # ধাপ ৩: বিল্ড করা APK গিটহাবে আপলোড (ডাউনলোড করার জন্য)
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: BCP-Notebook-Android-App
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      # ধাপ ৪: ওয়েবসাইট বিল্ড করা (Wasm)
       - name: Build Web (WasmJs)
         run: ./gradlew :composeApp:wasmJsBrowserDistribution
 
-      # ধাপ ৫: ফায়ারবেস হোস্টিংয়ে ডেপ্লয়
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_BCP_NOTEBOOK }}'
           channelId: live
-          projectId: your-project-id  # <--- আপনার আসল Firebase Project ID এখানে দিন
+          projectId: your-project-id 
