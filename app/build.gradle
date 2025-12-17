@@ -1,76 +1,61 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.jetbrains.compose)
     id 'com.google.gms.google-services'
+}
+
+kotlin {
+    androidTarget()
+    
+    wasmJs {
+        moduleName = "composeApp"
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp.js"
+            }
+        }
+        binaries.executable()
+    }
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
+            // মাল্টিপ্ল্যাটফর্ম নেভিগেশন
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.7.0-alpha07")
+            // ফায়ারবেস মাল্টিপ্ল্যাটফর্ম লাইব্রেরি
+            implementation("dev.gitlive:firebase-auth:1.11.0")
+            implementation("dev.gitlive:firebase-firestore:1.11.0")
+        }
+
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation("com.google.android.gms:play-services-auth:21.2.0")
+        }
+    }
 }
 
 android {
     namespace 'com.example.bcpnotebook'
     compileSdk 34
-
     defaultConfig {
         applicationId "com.example.bcpnotebook"
         minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-    buildFeatures {
-        compose true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.5.14'
-    }
 }
 
 dependencies {
-    implementation("io.coil-kt:coil-compose:2.5.0")
-    // Core & Activity
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
-    implementation 'androidx.activity:activity-compose:1.8.2'
-
-    // Compose (BOM 2024.05.00 version is stable)
-    implementation platform('androidx.compose:compose-bom:2024.05.00')
-    implementation 'androidx.compose.ui:ui'
-    implementation 'androidx.compose.ui:ui-graphics'
-    implementation 'androidx.compose.ui:ui-tooling-preview'
-    implementation 'androidx.compose.material3:material3'
-    
-    // আইকন এরর ফিক্স করার জন্য (Extended Icons)
-    implementation 'androidx.compose.material:material-icons-core'
-    implementation 'androidx.compose.material:material-icons-extended'
-
-    // Google Login এর জন্য এটি অত্যন্ত জরুরি (This was missing)
-    implementation 'com.google.android.gms:play-services-auth:21.2.0'
-
-    // Navigation
-    implementation 'androidx.navigation:navigation-compose:2.7.7'
-
-    // Firebase
-    implementation platform('com.google.firebase:firebase-bom:32.7.2')
-    implementation 'com.google.firebase:firebase-auth-ktx'
-    implementation 'com.google.firebase:firebase-firestore-ktx'
-
-    // Testing
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    // অ্যান্ড্রোয়েড স্পেসিফিক ফায়ারবেস (যদি লাগে)
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
 }

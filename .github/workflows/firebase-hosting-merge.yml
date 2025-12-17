@@ -1,0 +1,40 @@
+name: Build Android & Deploy Web
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ধাপ ১: অ্যান্ড্রয়েড APK বিল্ড করা
+      - name: Build Android APK
+        run: ./gradlew assembleDebug
+
+      # ধাপ ২: বিল্ড করা APK গিটহাবে আপলোড করা (যাতে আপনি ডাউনলোড করতে পারেন)
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BCP-Notebook-App
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      # ধাপ ৩: ওয়েবসাইট বিল্ড করা (Wasm)
+      - name: Build Web
+        run: ./gradlew :composeApp:wasmJsBrowserDistribution
+
+      # ধাপ ৪: ফায়ারবেস হোস্টিংয়ে ওয়েবসাইট ডেপ্লয় করা
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_BCP_NOTEBOOK }}'
+          channelId: live
+          projectId: streamcore-e0874  # আপনার আসল ফায়ারবেস প্রজেক্ট আইডি এখানে দিন
