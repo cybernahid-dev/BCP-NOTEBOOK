@@ -14,14 +14,13 @@ class FirestoreManager {
         try {
             val notesCollection = db.collection("users").document(userId).collection("notes")
             if (note.id.isEmpty()) {
-                val ref = notesCollection.document()
-                // কপি করে আইডি সেট করা হচ্ছে
-                ref.set(note.copy(id = ref.id))
+                // Fix: document() খালি না রেখে add() ব্যবহার করা হলো
+                notesCollection.add(note)
             } else {
                 notesCollection.document(note.id).set(note)
             }
         } catch (e: Exception) {
-            println("Error: ${e.message}")
+            println("Firestore Error: ${e.message}")
         }
     }
 
