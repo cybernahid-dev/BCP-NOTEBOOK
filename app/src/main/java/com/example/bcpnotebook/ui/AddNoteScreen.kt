@@ -2,21 +2,27 @@ package com.example.bcpnotebook.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -37,65 +43,116 @@ fun AddNoteScreen(navController: NavController) {
     var summary by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    val mainGradient = Brush.verticalGradient(colors = listOf(Color(0xFF0F172A), Color(0xFF1E293B)))
+    // Xiaomi Pro Toolbar States
+    var isBold by remember { mutableStateOf(false) }
+    var isItalic by remember { mutableStateOf(false) }
+    var isUnderline by remember { mutableStateOf(false) }
+    var isHighlighter by remember { mutableStateOf(false) }
+    var fontSize by remember { mutableStateOf(18.sp) }
 
     Scaffold(
-        containerColor = Color.Transparent,
+        containerColor = Color(0xFFF9F9F9),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("NEW NOTE", style = TextStyle(letterSpacing = 3.sp, fontWeight = FontWeight.Black, color = Color.White)) },
-                navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White) } },
+                title = { Text("Cornell Note", fontWeight = FontWeight.Bold) },
+                navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.Close, null) } },
                 actions = {
-                    IconButton(
-                        enabled = !isLoading,
-                        onClick = {
-                            if (title.isNotEmpty()) {
-                                isLoading = true
-                                val noteRef = firestore.collection("users").document(userId).collection("notes").document()
-                                val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes, summary = summary, timestamp = System.currentTimeMillis())
-                                
-                                noteRef.set(newNote)
-                                    .addOnSuccessListener {
-                                        isLoading = false // লোডিং বন্ধ হবে
-                                        Toast.makeText(context, "Successfully Saved!", Toast.LENGTH_SHORT).show()
-                                        navController.popBackStack() // সাথে সাথে ব্যাক করবে
-                                    }
-                                    .addOnFailureListener {
-                                        isLoading = false
-                                        Toast.makeText(context, "Failed: ${it.message}", Toast.LENGTH_SHORT).show()
-                                    }
-                            } else {
-                                Toast.makeText(context, "Title is required", Toast.LENGTH_SHORT).show()
+                    TextButton(onClick = {
+                        if (title.isNotEmpty()) {
+                            isLoading = true
+                            val noteRef = firestore.collection("users").document(userId).collection("notes").document()
+                            val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes, summary = summary, timestamp = System.currentTimeMillis())
+                            noteRef.set(newNote).addOnSuccessListener {
+                                isLoading = false
+                                Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
                             }
                         }
-                    ) {
-                        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF4ECCA3), strokeWidth = 2.dp)
-                        else Icon(Icons.Default.Done, contentDescription = null, tint = Color(0xFF4ECCA3))
+                    }) {
+                        if (isLoading) CircularProgressIndicator(size = 20.dp)
+                        else Text("SAVE", color = Color(0xFF007AFF), fontWeight = FontWeight.ExtraBold)
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
-            )
-        }
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().background(mainGradient).padding(padding)) {
-            Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp).verticalScroll(rememberScrollState())) {
-                TextField(
-                    value = title, onValueChange = { title = it },
-                    placeholder = { Text("Topic Title...", fontSize = 28.sp, color = Color.Gray) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent, cursorColor = Color(0xFF4ECCA3), focusedTextColor = Color.White, unfocusedTextColor = Color.White),
-                    textStyle = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
-                )
-                HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                Spacer(modifier = Modifier.height(20.dp))
-                Row(modifier = Modifier.fillMaxWidth().height(400.dp)) {
-                    OutlinedTextField(value = cues, onValueChange = { cues = it }, label = { Text("Cues", color = Color(0xFF4ECCA3)) }, modifier = Modifier.weight(0.4f).fillMaxHeight(), shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4ECCA3), unfocusedBorderColor = Color.White.copy(0.2f), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes", color = Color(0xFF4ECCA3)) }, modifier = Modifier.weight(0.6f).fillMaxHeight(), shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4ECCA3), unfocusedBorderColor = Color.White.copy(0.2f), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                 }
-                Spacer(modifier = Modifier.height(20.dp))
-                OutlinedTextField(value = summary, onValueChange = { summary = it }, label = { Text("Summary", color = Color(0xFF4ECCA3)) }, modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4ECCA3), unfocusedBorderColor = Color.White.copy(0.2f), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
+            )
+        },
+        bottomBar = {
+            // Xiaomi Style Pro Toolbar
+            Surface(
+                modifier = Modifier.fillMaxWidth().imePadding(),
+                tonalElevation = 4.dp,
+                color = Color.White
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                        .horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ToolbarIcon(Icons.Default.FormatListBulleted, "List")
+                    ToolbarIcon(Icons.Default.FormatSize, "Size", onClick = { fontSize = if(fontSize < 24.sp) fontSize + 2.sp else 16.sp })
+                    ToolbarIcon(Icons.Default.FormatBold, "Bold", isBold) { isBold = !isBold }
+                    ToolbarIcon(Icons.Default.FormatItalic, "Italic", isItalic) { isItalic = !isItalic }
+                    ToolbarIcon(Icons.Default.FormatUnderlined, "Underline", isUnderline) { isUnderline = !isUnderline }
+                    ToolbarIcon(Icons.Default.Brush, "Highlighter", isHighlighter) { isHighlighter = !isHighlighter }
+                    ToolbarIcon(Icons.Default.FormatColorText, "Color")
+                    ToolbarIcon(Icons.Default.Image, "Image")
+                }
             }
         }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .drawBehind {
+                    val redLineX = size.width * 0.35f
+                    drawLine(Color.Red.copy(0.2f), Offset(redLineX, 0f), Offset(redLineX, size.height), 2.dp.toPx())
+                }
+                .padding(16.dp)
+        ) {
+            TextField(
+                value = title, onValueChange = { title = it },
+                placeholder = { Text("Topic Title", fontSize = 28.sp, fontWeight = FontWeight.Bold) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
+                textStyle = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            )
+
+            Row(modifier = Modifier.fillMaxWidth().heightIn(min = 500.dp)) {
+                Box(modifier = Modifier.weight(0.35f)) {
+                    TextField(value = cues, onValueChange = { cues = it }, placeholder = { Text("Cues", color = Color.Gray) }, colors = TextFieldDefaults.colors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent))
+                }
+                Box(modifier = Modifier.weight(0.65f)) {
+                    TextField(
+                        value = notes, onValueChange = { notes = it },
+                        placeholder = { Text("Main Notes", color = Color.Gray) },
+                        colors = TextFieldDefaults.colors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
+                        textStyle = TextStyle(
+                            fontSize = fontSize,
+                            fontWeight = if(isBold) FontWeight.Bold else FontWeight.Normal,
+                            fontStyle = if(isItalic) FontStyle.Italic else FontStyle.Normal,
+                            textDecoration = if(isUnderline) TextDecoration.Underline else TextDecoration.None,
+                            background = if(isHighlighter) Color.Yellow.copy(alpha = 0.5f) else Color.Transparent
+                        )
+                    )
+                }
+            }
+            Divider(color = Color.Red.copy(0.2f))
+            Text("SUMMARY", modifier = Modifier.padding(top = 10.dp), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+            TextField(value = summary, onValueChange = { summary = it }, modifier = Modifier.fillMaxWidth().height(150.dp), colors = TextFieldDefaults.colors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent))
+        }
+    }
+}
+
+@Composable
+fun ToolbarIcon(icon: ImageVector, label: String, active: Boolean = false, onClick: () -> Unit = {}) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(40.dp).background(if (active) Color(0xFFE3F2FD) else Color.Transparent, CircleShape)
+    ) {
+        Icon(icon, contentDescription = label, tint = if (active) Color(0xFF007AFF) else Color.DarkGray)
     }
 }
