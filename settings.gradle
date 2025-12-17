@@ -10,7 +10,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://maven.pkg.jetbrains.space/public/p/compose/patch" }
     }
 }
+
 rootProject.name = "BCP-NOTEBOOK"
-include ':app'
+include ":app"

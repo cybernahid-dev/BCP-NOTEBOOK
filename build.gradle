@@ -4,17 +4,13 @@ buildscript {
         mavenCentral()
     }
     dependencies {
+        // প্লাগইন ভার্সনগুলো এখানে থাকবে
         classpath 'com.android.tools.build:gradle:8.2.2'
         classpath 'com.google.gms:google-services:4.4.1'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0'
         classpath 'org.jetbrains.compose:compose-gradle-plugin:1.6.10'
+        classpath 'org.jetbrains.kotlin:kotlin-serialization:2.0.0'
     }
 }
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url "https://maven.pkg.jetbrains.space/public/p/compose/patch" }
-    }
-}
+// এখান থেকে allprojects ব্লকটি মুছে ফেলা হয়েছে কারণ এটি settings.gradle-এ আছে
