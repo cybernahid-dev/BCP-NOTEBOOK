@@ -38,8 +38,12 @@ kotlin {
         
         androidMain.dependencies {
             implementation "androidx.activity:activity-compose:1.9.0"
+            // এই লাইব্রেরিগুলো GoogleSignIn এরর সমাধান করবে
             implementation "dev.gitlive:firebase-auth:1.13.0"
             implementation "dev.gitlive:firebase-firestore:1.13.0"
+            implementation platform('com.google.firebase:firebase-bom:33.1.0')
+            implementation "com.google.firebase:firebase-auth-ktx"
+            implementation "com.google.android.gms:play-services-auth:21.2.0"
         }
     }
 }
@@ -62,7 +66,6 @@ android {
     }
 }
 
-// এই অংশটি এরর ফিক্স করবে (Java target conflict)
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     kotlinOptions {
         jvmTarget = "17"
