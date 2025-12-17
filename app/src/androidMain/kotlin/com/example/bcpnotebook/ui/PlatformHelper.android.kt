@@ -1,9 +1,9 @@
 package com.example.bcpnotebook.ui
+
 import android.widget.Toast
-import com.example.bcpnotebook.MyApplication 
+import com.example.bcpnotebook.MainActivity
 
 actual fun showToast(message: String) {
-    // এখানে 'actual' কিউওয়ার্ডটি গুরুত্বপূর্ণ
-    // আপনার প্রজেক্টে যদি গ্লোবাল কনটেক্সট থাকে সেটি ব্যবহার করবেন
-    println("Android Toast: $message")
+    // Note: Android-এ টোস্টের জন্য Context প্রয়োজন। 
+    // বিল্ড করার সময় এটি এরর দিলে আপাতত এটি খালি রাখতে পারেন।
 }

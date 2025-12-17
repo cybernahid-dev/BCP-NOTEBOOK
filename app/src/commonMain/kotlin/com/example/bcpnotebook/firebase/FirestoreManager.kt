@@ -8,26 +8,24 @@ import dev.gitlive.firebase.firestore.firestore
 class FirestoreManager {
     private val db = Firebase.firestore
     private val auth = Firebase.auth
-    
-    private val userId: String 
-        get() = auth.currentUser?.uid ?: "anonymous"
+    private val userId: String get() = auth.currentUser?.uid ?: "anonymous"
 
     suspend fun saveNote(note: NoteModel) {
-        val notesCollection = db.collection("users").document(userId).collection("notes")
-        if (note.id.isEmpty()) {
-            val ref = notesCollection.document()
-            ref.set(note.copy(id = ref.id))
-        } else {
-            notesCollection.document(note.id).set(note)
-        }
+        try {
+            val notesCollection = db.collection("users").document(userId).collection("notes")
+            if (note.id.isEmpty()) {
+                val ref = notesCollection.document()
+                ref.set(note.copy(id = ref.id))
+            } else {
+                notesCollection.document(note.id).set(note)
+            }
+        } catch (e: Exception) { println(e.message) }
     }
 
     suspend fun getNotes(): List<NoteModel> {
         return try {
             val notesCollection = db.collection("users").document(userId).collection("notes")
             notesCollection.get().documents.map { it.data() }
-        } catch (e: Exception) {
-            emptyList()
-        }
+        } catch (e: Exception) { emptyList() }
     }
 }
