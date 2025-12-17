@@ -18,13 +18,12 @@ jobs:
       - name: Make Gradlew Executable
         run: chmod +x gradlew
 
-      # গুরুত্বপূর্ণ: গিটহাব রানারে ডিবাগ কী তৈরি করা
-      - name: Generate Debug Keystore
+      # এই অংশটি অটোমেটিক SHA-1 তৈরি করতে সাহায্য করবে
+      - name: Create Debug Keystore
         run: |
           mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias AndroidDebugKey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          keytool -genkey -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-      # এবার সাইনিং রিপোর্ট রান করলে SHA-1 পাওয়া যাবে
       - name: Get Signing Report
         run: ./gradlew signingReport
 
@@ -46,4 +45,4 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_BCP_NOTEBOOK }}'
           channelId: live
-          projectId: your-project-id 
+          projectId: streamcore-e0874
