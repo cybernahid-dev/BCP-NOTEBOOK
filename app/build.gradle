@@ -16,7 +16,11 @@ kotlin {
     
     wasmJs {
         browser {
-            commonWebpackConfig { devServer = [open: false] }
+            commonWebpackConfig {
+                devServer = [
+                    open: false
+                ]
+            }
         }
         binaries.executable()
     }
@@ -30,15 +34,14 @@ kotlin {
             implementation compose.components.resources
             implementation "org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha08"
             
-            // Firebase Multiplatform (Version aligned to prevent conflicts)
-            implementation "dev.gitlive:firebase-auth:1.12.0"
-            implementation "dev.gitlive:firebase-firestore:1.12.0"
+            // ফায়ারবেস ভার্সন আপডেট করা হলো (1.13.0)
+            implementation "dev.gitlive:firebase-auth:1.13.0"
+            implementation "dev.gitlive:firebase-firestore:1.13.0"
             implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3"
         }
         
         androidMain.dependencies {
             implementation "androidx.activity:activity-compose:1.9.0"
-            // Android Specific Firebase (BOM ব্যবহার করলে ভার্সন কনফ্লিক্ট হয় না)
             implementation platform('com.google.firebase:firebase-bom:33.1.0')
             implementation "com.google.firebase:firebase-auth-ktx"
             implementation "com.google.android.gms:play-services-auth:21.2.0"

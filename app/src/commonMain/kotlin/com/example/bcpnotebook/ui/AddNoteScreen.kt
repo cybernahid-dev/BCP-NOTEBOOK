@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +34,7 @@ fun AddNoteScreen(navController: NavController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showToast("Saving Note...") }) {
+                    IconButton(onClick = { showToast("Saving...") }) {
                         Icon(imageVector = Icons.Default.Save, contentDescription = "Save")
                     }
                 }
@@ -43,26 +42,20 @@ fun AddNoteScreen(navController: NavController) {
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
-            OutlinedTextField(
-                value = title, 
-                onValueChange = { title = it }, 
-                label = { Text("Title") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.height(400.dp).fillMaxWidth().border(1.dp, Color.LightGray)) {
                 Box(modifier = Modifier.weight(0.35f).fillMaxHeight().background(Color(0xFFF9F9F9))) {
-                    TextField(value = cues, onValueChange = { cues = it }, placeholder = { Text("Cues", fontSize = 12.sp) }, modifier = Modifier.fillMaxSize(), colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent))
+                    TextField(value = cues, onValueChange = { cues = it }, placeholder = { Text("Cues") }, modifier = Modifier.fillMaxSize())
                 }
                 Box(modifier = Modifier.width(2.dp).fillMaxHeight().background(marginRed))
                 Box(modifier = Modifier.weight(0.65f).fillMaxHeight()) {
-                    TextField(value = notes, onValueChange = { notes = it }, placeholder = { Text("Main Notes", fontSize = 12.sp) }, modifier = Modifier.fillMaxSize(), colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent))
+                    TextField(value = notes, onValueChange = { notes = it }, placeholder = { Text("Notes") }, modifier = Modifier.fillMaxSize())
                 }
             }
             HorizontalDivider(thickness = 2.dp, color = marginRed)
             Text("Summary", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp))
-            OutlinedTextField(value = summary, onValueChange = { summary = it }, modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(12.dp))
+            OutlinedTextField(value = summary, onValueChange = { summary = it }, modifier = Modifier.fillMaxWidth().height(150.dp))
         }
     }
 }

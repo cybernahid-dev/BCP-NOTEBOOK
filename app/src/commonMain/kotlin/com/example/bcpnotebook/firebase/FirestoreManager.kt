@@ -15,13 +15,13 @@ class FirestoreManager {
             val notesCollection = db.collection("users").document(userId).collection("notes")
             if (note.id.isEmpty()) {
                 val ref = notesCollection.document()
-                val finalNote = note.copy(id = ref.id)
-                ref.set(finalNote)
+                // কপি করে আইডি সেট করা হচ্ছে
+                ref.set(note.copy(id = ref.id))
             } else {
                 notesCollection.document(note.id).set(note)
             }
-        } catch (e: Exception) { 
-            println("Save Error: ${e.message}") 
+        } catch (e: Exception) {
+            println("Error: ${e.message}")
         }
     }
 
@@ -29,8 +29,6 @@ class FirestoreManager {
         return try {
             val notesCollection = db.collection("users").document(userId).collection("notes")
             notesCollection.get().documents.map { it.data() }
-        } catch (e: Exception) { 
-            emptyList() 
-        }
+        } catch (e: Exception) { emptyList() }
     }
 }
