@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,17 +40,19 @@ fun AddNoteScreen(navController: NavController) {
     var notes by remember { mutableStateOf("") }
     var summary by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+    
+    // Formatting States
     var isBold by remember { mutableStateOf(false) }
     var isItalic by remember { mutableStateOf(false) }
     var isUnderline by remember { mutableStateOf(false) }
     var isHighlighter by remember { mutableStateOf(false) }
-    var fontSize by remember { mutableStateOf(18.sp) }
+    var fontSizeValue by remember { mutableStateOf(18) } // Using Int to avoid math error
 
     Scaffold(
         containerColor = Color(0xFFF9F9F9),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Cornell SuperNote", fontWeight = FontWeight.Bold) },
+                title = { Text("Cornell Note", fontWeight = FontWeight.Bold) },
                 navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.Close, null) } },
                 actions = {
                     TextButton(onClick = {
@@ -75,15 +76,14 @@ fun AddNoteScreen(navController: NavController) {
         bottomBar = {
             Surface(modifier = Modifier.fillMaxWidth().imePadding(), tonalElevation = 4.dp, color = Color.White) {
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Using basic Icons to avoid library mismatch
+                    // Standard Icons only to avoid "Unresolved Reference"
                     ToolbarIcon(Icons.Default.List, "List")
-                    ToolbarIcon(Icons.Default.TextFields, "Size", onClick = { fontSize = if(fontSize < 26.sp) fontSize + 2.sp else 16.sp })
-                    ToolbarIcon(Icons.Default.FormatBold, "Bold", isBold) { isBold = !isBold }
-                    ToolbarIcon(Icons.Default.FormatItalic, "Italic", isItalic) { isItalic = !isItalic }
-                    ToolbarIcon(Icons.Default.FormatUnderlined, "Underline", isUnderline) { isUnderline = !isUnderline }
-                    ToolbarIcon(Icons.Default.FormatColorFill, "Highlighter", isHighlighter) { isHighlighter = !isHighlighter }
-                    ToolbarIcon(Icons.Default.Palette, "Color")
-                    ToolbarIcon(Icons.Default.Image, "Image")
+                    ToolbarIcon(Icons.Default.Add, "Size Up", active = false) { if(fontSizeValue < 30) fontSizeValue += 2 }
+                    ToolbarIcon(Icons.Default.Remove, "Size Down", active = false) { if(fontSizeValue > 12) fontSizeValue -= 2 }
+                    ToolbarIcon(Icons.Default.Edit, "Format", active = isBold) { isBold = !isBold }
+                    ToolbarIcon(Icons.Default.Info, "Italic", active = isItalic) { isItalic = !isItalic }
+                    ToolbarIcon(Icons.Default.ArrowDownward, "Underline", active = isUnderline) { isUnderline = !isUnderline }
+                    ToolbarIcon(Icons.Default.Star, "Highlight", active = isHighlighter) { isHighlighter = !isHighlighter }
                 }
             }
         }
@@ -98,7 +98,15 @@ fun AddNoteScreen(navController: NavController) {
                     TextField(value = cues, onValueChange = { cues = it }, placeholder = { Text("Cues") }, colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent))
                 }
                 Box(modifier = Modifier.weight(0.65f)) {
-                    TextField(value = notes, onValueChange = { notes = it }, placeholder = { Text("Notes") }, colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent), textStyle = TextStyle(fontSize = fontSize, fontWeight = if(isBold) FontWeight.Bold else FontWeight.Normal, fontStyle = if(isItalic) FontStyle.Italic else FontStyle.Normal, textDecoration = if(isUnderline) TextDecoration.Underline else TextDecoration.None, background = if(isHighlighter) Color.Yellow.copy(0.5f) else Color.Transparent))
+                    TextField(value = notes, onValueChange = { notes = it }, placeholder = { Text("Notes") }, colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent), 
+                        textStyle = TextStyle(
+                            fontSize = fontSizeValue.sp, 
+                            fontWeight = if(isBold) FontWeight.Bold else FontWeight.Normal, 
+                            fontStyle = if(isItalic) FontStyle.Italic else FontWeight.Normal, 
+                            textDecoration = if(isUnderline) TextDecoration.Underline else TextDecoration.None, 
+                            background = if(isHighlighter) Color.Yellow.copy(alpha = 0.5f) else Color.Transparent
+                        )
+                    )
                 }
             }
             HorizontalDivider(color = Color.Red.copy(0.2f))

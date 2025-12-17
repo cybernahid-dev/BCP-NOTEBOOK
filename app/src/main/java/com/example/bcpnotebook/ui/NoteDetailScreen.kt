@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -76,22 +75,14 @@ fun NoteDetailScreen(navController: NavController, noteId: String?) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         } else {
             Column(modifier = Modifier.fillMaxSize().padding(padding).background(Color(0xFFFDFCF0)).padding(16.dp).verticalScroll(rememberScrollState())) {
-                if (isEditing) {
-                    OutlinedTextField(value = noteCues, onValueChange = { noteCues = it }, label = { Text("Cues") }, modifier = Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedTextField(value = noteContent, onValueChange = { noteContent = it }, label = { Text("Notes") }, modifier = Modifier.fillMaxWidth().height(300.dp))
-                    Spacer(Modifier.height(10.dp))
-                    OutlinedTextField(value = noteSummary, onValueChange = { noteSummary = it }, label = { Text("Summary") }, modifier = Modifier.fillMaxWidth())
-                } else {
-                    Text("Cues", fontWeight = FontWeight.Bold, color = Color.Blue)
-                    Text(noteCues, fontSize = 16.sp)
-                    HorizontalDivider(Modifier.padding(vertical = 10.dp))
-                    Text("Main Notes", fontWeight = FontWeight.Bold, color = Color.Blue)
-                    Text(noteContent, fontSize = 18.sp)
-                    HorizontalDivider(Modifier.padding(vertical = 10.dp))
-                    Text("Summary", fontWeight = FontWeight.Bold, color = Color.Blue)
-                    Text(noteSummary, fontSize = 16.sp)
-                }
+                Text("Cues", fontWeight = FontWeight.Bold, color = Color.Blue)
+                Text(noteCues, fontSize = 16.sp)
+                HorizontalDivider(Modifier.padding(vertical = 10.dp))
+                Text("Main Notes", fontWeight = FontWeight.Bold, color = Color.Blue)
+                Text(noteContent, fontSize = 18.sp)
+                HorizontalDivider(Modifier.padding(vertical = 10.dp))
+                Text("Summary", fontWeight = FontWeight.Bold, color = Color.Blue)
+                Text(noteSummary, fontSize = 16.sp)
             }
         }
     }
