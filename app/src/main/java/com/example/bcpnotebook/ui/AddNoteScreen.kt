@@ -30,8 +30,8 @@ fun AddNoteScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(10.dp))
             Row(modifier = Modifier.height(300.dp)) {
                 OutlinedTextField(
-                    value = cues, onValueChange = { cues = it },
-                    label = { Text("Cues") },
+                    value = clues, onValueChange = { clues = it },
+                    label = { Text("Clues") },
                     modifier = Modifier.weight(0.4f).fillMaxHeight()
                 )
                 Spacer(modifier = Modifier.width(8.dp))

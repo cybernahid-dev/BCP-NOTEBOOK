@@ -2,104 +2,70 @@ package com.example.bcpnotebook.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
+import com.example.bcpnotebook.model.Note
 import com.example.bcpnotebook.ui.theme.*
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotebookScreen(navController: NavController) {
+    val firestore = FirebaseFirestore.getInstance()
     val auth = FirebaseAuth.getInstance()
-    val user = auth.currentUser
-    var showProfileDialog by remember { mutableStateOf(false) }
+    val userId = auth.currentUser?.uid ?: ""
+    var notesList by remember { mutableStateOf<List<Note>>(emptyList()) }
 
-    // Profile Dialog
-    if (showProfileDialog) {
-        AlertDialog(
-            onDismissRequest = { showProfileDialog = false },
-            title = { Text("Account Info", fontWeight = FontWeight.Bold) },
-            text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    if (user?.photoUrl != null) {
-                        AsyncImage(
-                            model = user.photoUrl,
-                            contentDescription = "Profile",
-                            modifier = Modifier.size(60.dp).clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(60.dp), tint = SoftBlue)
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(text = user?.displayName ?: "User Name", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text(text = user?.email ?: "No Email", color = TextSecondary, fontSize = 14.sp)
+    // ডাটা রিয়েলটাইম লোড করার জন্য
+    LaunchedEffect(userId) {
+        firestore.collection("notes")
+            .whereEqualTo("userId", userId)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    notesList = snapshot.toObjects(Note::class.java)
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        auth.signOut()
-                        // লগআউট করে লগইন পেজে নিয়ে যাবে
-                        navController.navigate("login") { popUpTo("notebook") { inclusive = true } }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                ) {
-                    Text("Logout")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showProfileDialog = false }) { Text("Close") }
-            },
-            containerColor = SurfaceWhite
-        )
+            }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("BCP Notebook", color = SoftBlue, fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton(onClick = { showProfileDialog = true }) {
-                        if (user?.photoUrl != null) {
-                            AsyncImage(model = user.photoUrl, contentDescription = "Profile", modifier = Modifier.size(30.dp).clip(CircleShape))
-                        } else {
-                            Icon(Icons.Default.AccountCircle, contentDescription = "Profile", tint = SoftBlue)
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BackgroundLight)
-            )
+            TopAppBar(title = { Text("My Notebook") })
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate("add_note") },
-                containerColor = SoftBlue,
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Note")
+            FloatingActionButton(onClick = { navController.navigate("add_note") }) {
+                Icon(Icons.Default.Add, contentDescription = "Add")
             }
         }
     ) { padding ->
-        Box(
-            modifier = Modifier.fillMaxSize().background(BackgroundLight).padding(padding),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Your Cornell Notes will appear here", color = TextSecondary)
+        if (notesList.isEmpty()) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("No notes found. Create one!")
+            }
+        } else {
+            LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
+                items(notesList) { note ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        elevation = CardDefaults.cardElevation(4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = note.title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, fontSize = 18.sp)
+                            Text(text = note.summary, maxLines = 2, color = Color.Gray)
+                        }
+                    }
+                }
+            }
         }
     }
 }
