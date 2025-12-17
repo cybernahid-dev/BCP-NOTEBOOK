@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.extended.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,7 +51,7 @@ fun AddNoteScreen(navController: NavController) {
         containerColor = Color(0xFFF9F9F9),
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Cornell Note", fontWeight = FontWeight.Bold) },
+                title = { Text("Cornell SuperNote", fontWeight = FontWeight.Bold) },
                 navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.Close, null) } },
                 actions = {
                     TextButton(onClick = {
@@ -75,13 +75,14 @@ fun AddNoteScreen(navController: NavController) {
         bottomBar = {
             Surface(modifier = Modifier.fillMaxWidth().imePadding(), tonalElevation = 4.dp, color = Color.White) {
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ToolbarIcon(Icons.Default.FormatListBulleted, "List")
-                    ToolbarIcon(Icons.Default.FormatSize, "Size", onClick = { fontSize = if(fontSize < 24.sp) fontSize + 2.sp else 16.sp })
+                    // Using basic Icons to avoid library mismatch
+                    ToolbarIcon(Icons.Default.List, "List")
+                    ToolbarIcon(Icons.Default.TextFields, "Size", onClick = { fontSize = if(fontSize < 26.sp) fontSize + 2.sp else 16.sp })
                     ToolbarIcon(Icons.Default.FormatBold, "Bold", isBold) { isBold = !isBold }
                     ToolbarIcon(Icons.Default.FormatItalic, "Italic", isItalic) { isItalic = !isItalic }
                     ToolbarIcon(Icons.Default.FormatUnderlined, "Underline", isUnderline) { isUnderline = !isUnderline }
-                    ToolbarIcon(Icons.Default.Brush, "Highlighter", isHighlighter) { isHighlighter = !isHighlighter }
-                    ToolbarIcon(Icons.Default.FormatColorText, "Color")
+                    ToolbarIcon(Icons.Default.FormatColorFill, "Highlighter", isHighlighter) { isHighlighter = !isHighlighter }
+                    ToolbarIcon(Icons.Default.Palette, "Color")
                     ToolbarIcon(Icons.Default.Image, "Image")
                 }
             }
