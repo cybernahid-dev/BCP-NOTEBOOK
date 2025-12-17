@@ -36,7 +36,6 @@ fun AddNoteScreen(navController: NavController) {
     var title by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    // States for High-Level Customization
     var fontSizeVal by remember { mutableStateOf(18) }
     var selectedFont by remember { mutableStateOf(FontFamily.SansSerif) }
 
@@ -98,13 +97,8 @@ fun AddNoteScreen(navController: NavController) {
             }
         }
 
-        // --- Futuristic Glass Toolbar ---
         Surface(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(20.dp)
-                .navigationBarsPadding()
-                .imePadding(),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(20.dp).navigationBarsPadding().imePadding(),
             shape = RoundedCornerShape(28.dp),
             color = Color.Black.copy(alpha = 0.85f),
             tonalElevation = 8.dp
@@ -114,17 +108,18 @@ fun AddNoteScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(15.dp)
             ) {
+                // Using only the most basic icons guaranteed in all versions
                 IconButton(onClick = { selectedFont = if(selectedFont == FontFamily.SansSerif) FontFamily.Serif else FontFamily.SansSerif }) { 
-                    Icon(Icons.Default.Edit, null, tint = Color.White) 
+                    Icon(Icons.Default.Menu, null, tint = Color.White) 
                 }
                 IconButton(onClick = { if(fontSizeVal < 30) fontSizeVal += 2 else fontSizeVal = 16 }) { 
                     Icon(Icons.Default.Add, null, tint = Color.White) 
                 }
-                IconButton(onClick = { /* Color Picker Logic */ }) { 
-                    Icon(Icons.Default.ColorLens, null, tint = Color.Cyan) 
+                IconButton(onClick = { }) { 
+                    Icon(Icons.Default.Build, null, tint = Color.Cyan) 
                 }
-                IconButton(onClick = { /* Mic Logic */ }) { 
-                    Icon(Icons.Default.KeyboardVoice, null, tint = Color.White) 
+                IconButton(onClick = { }) { 
+                    Icon(Icons.Default.Info, null, tint = Color.White) 
                 }
                 
                 VerticalDivider(modifier = Modifier.height(24.dp), color = Color.DarkGray)
