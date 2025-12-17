@@ -2,9 +2,11 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.multiplatform'
     id 'org.jetbrains.compose'
-    id 'org.jetbrains.kotlin.plugin.compose'
     id 'com.google.gms.google-services'
 }
+
+// আলাদাভাবে কম্পোজ কম্পাইলার সেটআপ (নতুন নিয়ম)
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 kotlin {
     androidTarget {
@@ -33,7 +35,6 @@ kotlin {
             implementation compose.material3
             implementation compose.ui
             implementation compose.components.resources
-            implementation compose.components.uiToolingPreview
             implementation "org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha08"
             
             // Firebase Multiplatform
