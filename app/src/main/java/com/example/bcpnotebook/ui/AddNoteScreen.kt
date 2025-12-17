@@ -31,7 +31,7 @@ fun AddNoteScreen(navController: NavController) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-    
+
     var title by remember { mutableStateOf("") }
     var cues by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
@@ -60,16 +60,16 @@ fun AddNoteScreen(navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        IconButton(onClick = { selectedFont = if(selectedFont == FontFamily.SansSerif) FontFamily.Serif else FontFamily.SansSerif }) { 
-                            Icon(Icons.Default.Menu, null, tint = Color.White) 
+                        IconButton(onClick = { selectedFont = if(selectedFont == FontFamily.SansSerif) FontFamily.Serif else FontFamily.SansSerif }) {
+                            Icon(Icons.Default.Menu, null, tint = Color.White)
                         }
-                        IconButton(onClick = { if(fontSizeVal < 30) fontSizeVal += 2 else fontSizeVal = 16 }) { 
-                            Icon(Icons.Default.Add, null, tint = Color.White) 
+                        IconButton(onClick = { if(fontSizeVal < 30) fontSizeVal += 2 else fontSizeVal = 16 }) {
+                            Icon(Icons.Default.Add, null, tint = Color.White)
                         }
                         IconButton(onClick = { }) { Icon(Icons.Default.Build, null, tint = Color.Cyan) }
                         IconButton(onClick = { }) { Icon(Icons.Default.Info, null, tint = Color.White) }
                     }
-                    
+
                     Button(
                         onClick = {
                             if (title.isNotEmpty()) {
@@ -100,46 +100,59 @@ fun AddNoteScreen(navController: NavController) {
                     .verticalScroll(rememberScrollState())
                     .drawBehind {
                         val spacing = 32.dp.toPx()
-                        val headerOffset = 150.dp.toPx()
-                        val summaryOffset = 220.dp.toPx()
-                        
+                        val headerOffset = 120.dp.toPx() // Adjusted offset for blue lines to start after title
+
                         // Horizontal Blue Lines (Background Ruling)
                         for (i in 0..(size.height / spacing).toInt()) {
                             val y = i * spacing + headerOffset
                             drawLine(lineBlue, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
                         }
-                        
-                        // Vertical Red Margin (Stops precisely at Summary section)
-                        val marginX = size.width * 0.28f
-                        drawLine(
-                            marginRed, 
-                            Offset(marginX, headerOffset), 
-                            Offset(marginX, size.height - summaryOffset), 
-                            2.dp.toPx()
-                        )
-                        
-                        // Horizontal Red Line for Summary Divider
-                        val summaryY = size.height - summaryOffset
-                        drawLine(marginRed, Offset(0f, summaryY), Offset(size.width, summaryY), 2.dp.toPx())
                     }
             ) {
+                // FIX 1: Add Spacer to prevent title from overlapping with the back button
+                Spacer(modifier = Modifier.height(56.dp))
+
                 // Topic Title
                 TextField(
                     value = title, onValueChange = { title = it },
                     placeholder = { Text("Topic Title", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black.copy(0.4f)) },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
                     textStyle = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold),
-                    colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    )
                 )
 
                 // Main Body: Cues and Notes
-                Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 600.dp)
+                        .drawBehind {
+                            // FIX 2: Vertical red line is now drawn only within this Row's bounds
+                            val marginX = size.width * 0.28f
+                            drawLine(
+                                color = marginRed,
+                                start = Offset(marginX, 0f),
+                                end = Offset(marginX, size.height),
+                                strokeWidth = 2.dp.toPx()
+                            )
+                        }
+                ) {
                     // Left Side: Cues Area
                     Box(modifier = Modifier.weight(0.28f).padding(start = 12.dp)) {
                         TextField(
                             value = cues, onValueChange = { cues = it },
                             placeholder = { Text("CUES", fontWeight = FontWeight.Bold, color = marginRed.copy(0.8f), fontSize = 14.sp) },
-                            colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            )
                         )
                     }
                     // Right Side: Notes Area
@@ -149,10 +162,18 @@ fun AddNoteScreen(navController: NavController) {
                             placeholder = { Text("Take detailed notes here...") },
                             textStyle = TextStyle(fontSize = fontSizeVal.sp, fontFamily = selectedFont, lineHeight = 32.sp),
                             modifier = Modifier.fillMaxWidth(),
-                            colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            )
                         )
                     }
                 }
+
+                // FIX 2: Explicit horizontal divider for the summary section
+                Divider(color = marginRed, thickness = 2.dp)
 
                 // Professional Summary Section (Full Width, No Vertical Red Line)
                 Box(
@@ -167,7 +188,12 @@ fun AddNoteScreen(navController: NavController) {
                             value = summary, onValueChange = { summary = it },
                             placeholder = { Text("Summarize the key points here...", color = Color.Gray.copy(0.5f)) },
                             modifier = Modifier.fillMaxSize(),
-                            colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            )
                         )
                     }
                 }
