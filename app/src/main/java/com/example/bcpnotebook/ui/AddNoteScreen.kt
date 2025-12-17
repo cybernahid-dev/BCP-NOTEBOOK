@@ -45,121 +45,132 @@ fun AddNoteScreen(navController: NavController) {
     val lineBlue = Color(0xFFD1E4EC)
     val marginRed = Color(0xFFFF9999)
 
-    Box(modifier = Modifier.fillMaxSize().background(paperColor)) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .drawBehind {
-                    val spacing = 32.dp.toPx()
-                    val headerHeight = 160.dp.toPx()
-                    
-                    // Horizontal Ruling Lines
-                    for (i in 0..(size.height / spacing).toInt()) {
-                        val y = i * spacing + headerHeight
-                        drawLine(lineBlue, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
+    Scaffold(
+        modifier = Modifier.fillMaxSize().imePadding(), // কিবোর্ড ফিক্স
+        bottomBar = {
+            // Futuristic Glass Toolbar
+            Surface(
+                modifier = Modifier.padding(16.dp),
+                shape = RoundedCornerShape(28.dp),
+                color = Color.Black.copy(alpha = 0.9f),
+                tonalElevation = 10.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        IconButton(onClick = { selectedFont = if(selectedFont == FontFamily.SansSerif) FontFamily.Serif else FontFamily.SansSerif }) { 
+                            Icon(Icons.Default.Menu, null, tint = Color.White) 
+                        }
+                        IconButton(onClick = { if(fontSizeVal < 30) fontSizeVal += 2 else fontSizeVal = 16 }) { 
+                            Icon(Icons.Default.Add, null, tint = Color.White) 
+                        }
+                        IconButton(onClick = { }) { Icon(Icons.Default.Build, null, tint = Color.Cyan) }
+                        IconButton(onClick = { }) { Icon(Icons.Default.Info, null, tint = Color.White) }
                     }
                     
-                    // Vertical Cornell Margin Line
-                    val marginX = size.width * 0.30f
-                    drawLine(marginRed, Offset(marginX, headerHeight), Offset(marginX, size.height - 180.dp.toPx()), 2.dp.toPx())
-                    
-                    // Summary Section Horizontal Line
-                    val summaryTopY = size.height - 180.dp.toPx()
-                    drawLine(marginRed, Offset(0f, summaryTopY), Offset(size.width, summaryTopY), 2.dp.toPx())
-                }
-        ) {
-            // 1. Header: Topic Title (Now adjusted to stay outside margins)
-            TextField(
-                value = title, onValueChange = { title = it },
-                placeholder = { Text("Topic Title", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.Gray.copy(0.6f)) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 30.dp),
-                textStyle = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Black),
-                colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
-            )
-
-            // 2. Cornell Main Body (Cues and Notes)
-            Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp)) {
-                // Left side: Cues
-                Box(modifier = Modifier.weight(0.30f).padding(start = 10.dp)) {
-                    TextField(
-                        value = cues, onValueChange = { cues = it },
-                        placeholder = { Text("CUES / Qs", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = marginRed) },
-                        colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
-                    )
-                }
-                // Right side: Main Notes
-                Box(modifier = Modifier.weight(0.70f)) {
-                    TextField(
-                        value = notes, onValueChange = { notes = it },
-                        placeholder = { Text("Take detailed notes here...", color = Color.Gray.copy(0.4f)) },
-                        textStyle = TextStyle(fontSize = fontSizeVal.sp, fontFamily = selectedFont, lineHeight = 32.sp),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
-                    )
+                    Button(
+                        onClick = {
+                            if (title.isNotEmpty()) {
+                                isLoading = true
+                                val noteRef = firestore.collection("users").document(userId).collection("notes").document()
+                                val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes, summary = summary, timestamp = System.currentTimeMillis())
+                                noteRef.set(newNote).addOnSuccessListener {
+                                    isLoading = false
+                                    Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
+                                    navController.popBackStack()
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
+                        shape = CircleShape
+                    ) {
+                        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                        else Text("SAVE", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
-
-            // 3. Summary Section (Added New)
-            Column(modifier = Modifier.fillMaxWidth().padding(top = 20.dp).height(250.dp)) {
-                Text("SUMMARY", modifier = Modifier.padding(start = 20.dp), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().background(paperColor).padding(innerPadding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .drawBehind {
+                        val spacing = 32.dp.toPx()
+                        val headerHeight = 130.dp.toPx()
+                        
+                        // Horizontal Lines
+                        for (i in 0..(size.height / spacing).toInt()) {
+                            val y = i * spacing + headerHeight
+                            drawLine(lineBlue, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
+                        }
+                        
+                        // Red Margin Line (Stops before summary)
+                        val marginX = size.width * 0.28f
+                        drawLine(marginRed, Offset(marginX, headerHeight), Offset(marginX, size.height - 220.dp.toPx()), 2.dp.toPx())
+                    }
+            ) {
+                // Topic Title Section
                 TextField(
-                    value = summary, onValueChange = { summary = it },
-                    placeholder = { Text("Summarize the key points here...", color = Color.Gray.copy(0.4f)) },
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                    value = title, onValueChange = { title = it },
+                    placeholder = { Text("Topic Title", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold) },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 15.dp),
+                    textStyle = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.ExtraBold),
                     colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
                 )
-            }
-            Spacer(modifier = Modifier.height(100.dp)) // Extra space for floating toolbar
-        }
 
-        // --- Futuristic Glass Toolbar ---
-        Surface(
-            modifier = Modifier.align(Alignment.BottomCenter).padding(20.dp).navigationBarsPadding().imePadding(),
-            shape = RoundedCornerShape(28.dp),
-            color = Color.Black.copy(alpha = 0.85f),
-            tonalElevation = 8.dp
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp).horizontalScroll(rememberScrollState()),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(15.dp)
-            ) {
-                IconButton(onClick = { selectedFont = if(selectedFont == FontFamily.SansSerif) FontFamily.Serif else FontFamily.SansSerif }) { 
-                    Icon(Icons.Default.Menu, null, tint = Color.White) 
+                // Cornell Body
+                Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp)) {
+                    // Cues Column
+                    Box(modifier = Modifier.weight(0.28f).padding(start = 10.dp)) {
+                        TextField(
+                            value = cues, onValueChange = { cues = it },
+                            placeholder = { Text("CUES", fontWeight = FontWeight.Bold, color = marginRed.copy(0.7f)) },
+                            colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
+                        )
+                    }
+                    // Main Notes Column
+                    Box(modifier = Modifier.weight(0.72f)) {
+                        TextField(
+                            value = notes, onValueChange = { notes = it },
+                            placeholder = { Text("Take detailed notes here...") },
+                            textStyle = TextStyle(fontSize = fontSizeVal.sp, fontFamily = selectedFont, lineHeight = 32.sp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
+                        )
+                    }
                 }
-                IconButton(onClick = { if(fontSizeVal < 30) fontSizeVal += 2 else fontSizeVal = 16 }) { 
-                    Icon(Icons.Default.Add, null, tint = Color.White) 
-                }
-                IconButton(onClick = { }) { Icon(Icons.Default.Build, null, tint = Color.Cyan) }
-                IconButton(onClick = { }) { Icon(Icons.Default.Info, null, tint = Color.White) }
-                
-                VerticalDivider(modifier = Modifier.height(24.dp), color = Color.DarkGray)
-                
-                Button(
-                    onClick = {
-                        if (title.isNotEmpty()) {
-                            isLoading = true
-                            val noteRef = firestore.collection("users").document(userId).collection("notes").document()
-                            val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes, summary = summary, timestamp = System.currentTimeMillis())
-                            noteRef.set(newNote).addOnSuccessListener {
-                                isLoading = false
-                                Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
-                                navController.popBackStack()
-                            }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
-                    shape = CircleShape
+
+                // Summary Section (Clean and Professional Placement)
+                Divider(color = marginRed, thickness = 2.dp, modifier = Modifier.padding(horizontal = 10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp)
+                        .background(Color.Black.copy(alpha = 0.02f))
+                        .padding(20.dp)
                 ) {
-                    if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
-                    else Text("SAVE", fontWeight = FontWeight.Bold)
+                    Column {
+                        Text("SUMMARY", fontSize = 14.sp, fontWeight = FontWeight.Black, color = marginRed)
+                        TextField(
+                            value = summary, onValueChange = { summary = it },
+                            placeholder = { Text("Summarize key points here...", color = Color.Gray.copy(0.5f)) },
+                            modifier = Modifier.fillMaxSize(),
+                            colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(50.dp))
             }
-        }
-        
-        IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.padding(10.dp)) {
-            Icon(Icons.Default.ArrowBack, null, tint = Color.Black)
+
+            // Back Button
+            IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.padding(10.dp)) {
+                Icon(Icons.Default.ArrowBack, null, tint = Color.Black)
+            }
         }
     }
 }
