@@ -46,7 +46,7 @@ fun AddNoteScreen(navController: NavController) {
     var isItalic by remember { mutableStateOf(false) }
     var isUnderline by remember { mutableStateOf(false) }
     var isHighlighter by remember { mutableStateOf(false) }
-    var fontSizeValue by remember { mutableStateOf(18) } // Using Int to avoid math error
+    var fontSizeValue by remember { mutableStateOf(18) }
 
     Scaffold(
         containerColor = Color(0xFFF9F9F9),
@@ -76,14 +76,13 @@ fun AddNoteScreen(navController: NavController) {
         bottomBar = {
             Surface(modifier = Modifier.fillMaxWidth().imePadding(), tonalElevation = 4.dp, color = Color.White) {
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Standard Icons only to avoid "Unresolved Reference"
+                    // Only using most basic Icons that are guaranteed to exist
                     ToolbarIcon(Icons.Default.List, "List")
-                    ToolbarIcon(Icons.Default.Add, "Size Up", active = false) { if(fontSizeValue < 30) fontSizeValue += 2 }
-                    ToolbarIcon(Icons.Default.Remove, "Size Down", active = false) { if(fontSizeValue > 12) fontSizeValue -= 2 }
-                    ToolbarIcon(Icons.Default.Edit, "Format", active = isBold) { isBold = !isBold }
-                    ToolbarIcon(Icons.Default.Info, "Italic", active = isItalic) { isItalic = !isItalic }
-                    ToolbarIcon(Icons.Default.ArrowDownward, "Underline", active = isUnderline) { isUnderline = !isUnderline }
-                    ToolbarIcon(Icons.Default.Star, "Highlight", active = isHighlighter) { isHighlighter = !isHighlighter }
+                    ToolbarIcon(Icons.Default.Add, "Size Up") { if(fontSizeValue < 30) fontSizeValue += 2 }
+                    ToolbarIcon(Icons.Default.KeyboardArrowUp, "Bold", isBold) { isBold = !isBold }
+                    ToolbarIcon(Icons.Default.Info, "Italic", isItalic) { isItalic = !isItalic }
+                    ToolbarIcon(Icons.Default.KeyboardArrowDown, "Underline", isUnderline) { isUnderline = !isUnderline }
+                    ToolbarIcon(Icons.Default.Create, "Highlight", isHighlighter) { isHighlighter = !isHighlighter }
                 }
             }
         }
@@ -98,11 +97,15 @@ fun AddNoteScreen(navController: NavController) {
                     TextField(value = cues, onValueChange = { cues = it }, placeholder = { Text("Cues") }, colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent))
                 }
                 Box(modifier = Modifier.weight(0.65f)) {
-                    TextField(value = notes, onValueChange = { notes = it }, placeholder = { Text("Notes") }, colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent), 
+                    val fStyle: FontStyle = if (isItalic) FontStyle.Italic else FontStyle.Normal
+                    TextField(
+                        value = notes, onValueChange = { notes = it },
+                        placeholder = { Text("Notes") },
+                        colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent), 
                         textStyle = TextStyle(
                             fontSize = fontSizeValue.sp, 
                             fontWeight = if(isBold) FontWeight.Bold else FontWeight.Normal, 
-                            fontStyle = if(isItalic) FontStyle.Italic else FontWeight.Normal, 
+                            fontStyle = fStyle, 
                             textDecoration = if(isUnderline) TextDecoration.Underline else TextDecoration.None, 
                             background = if(isHighlighter) Color.Yellow.copy(alpha = 0.5f) else Color.Transparent
                         )
