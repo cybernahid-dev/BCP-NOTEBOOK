@@ -5,6 +5,6 @@ import androidx.compose.runtime.Composable
 @Composable
 actual fun rememberFirebaseAuthLauncher(onResult: (Result<String>) -> Unit): () -> Unit {
     return {
-        println("Google Auth on Web: Coming Soon")
+        println("Google Auth on Web: Placeholder")
     }
 }
