@@ -37,152 +37,64 @@ fun AddNoteScreen(navController: NavController) {
     var summary by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Futuristic Background Gradient (Xiaomi Style)
-    val mainGradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFF0F172A), Color(0xFF1E293B))
-    )
+    val mainGradient = Brush.verticalGradient(colors = listOf(Color(0xFF0F172A), Color(0xFF1E293B)))
 
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        "NEW NOTE", 
-                        style = TextStyle(
-                            letterSpacing = 3.sp, 
-                            fontWeight = FontWeight.Black,
-                            color = Color.White
-                        ) 
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White)
-                    }
-                },
+                title = { Text("NEW NOTE", style = TextStyle(letterSpacing = 3.sp, fontWeight = FontWeight.Black, color = Color.White)) },
+                navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White) } },
                 actions = {
                     IconButton(
+                        enabled = !isLoading,
                         onClick = {
                             if (title.isNotEmpty()) {
                                 isLoading = true
                                 val noteRef = firestore.collection("users").document(userId).collection("notes").document()
-                                val newNote = Note(
-                                    id = noteRef.id, 
-                                    userId = userId, 
-                                    title = title, 
-                                    cues = cues, 
-                                    notes = notes, 
-                                    summary = summary,
-                                    timestamp = System.currentTimeMillis()
-                                )
-                                noteRef.set(newNote).addOnSuccessListener {
-                                    Toast.makeText(context, "Saved Successfully", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
-                                }.addOnFailureListener {
-                                    isLoading = false
-                                    Toast.makeText(context, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
-                                }
+                                val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes, summary = summary, timestamp = System.currentTimeMillis())
+                                
+                                noteRef.set(newNote)
+                                    .addOnSuccessListener {
+                                        isLoading = false // লোডিং বন্ধ হবে
+                                        Toast.makeText(context, "Successfully Saved!", Toast.LENGTH_SHORT).show()
+                                        navController.popBackStack() // সাথে সাথে ব্যাক করবে
+                                    }
+                                    .addOnFailureListener {
+                                        isLoading = false
+                                        Toast.makeText(context, "Failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                                    }
                             } else {
-                                Toast.makeText(context, "Title required!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Title is required", Toast.LENGTH_SHORT).show()
                             }
                         }
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF4ECCA3), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Done, contentDescription = null, tint = Color(0xFF4ECCA3))
-                        }
+                        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color(0xFF4ECCA3), strokeWidth = 2.dp)
+                        else Icon(Icons.Default.Done, contentDescription = null, tint = Color(0xFF4ECCA3))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .background(mainGradient)
-            .padding(padding)
-        ) {
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp)
-                .verticalScroll(rememberScrollState())
-            ) {
-                // Title Field
+        Box(modifier = Modifier.fillMaxSize().background(mainGradient).padding(padding)) {
+            Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp).verticalScroll(rememberScrollState())) {
                 TextField(
                     value = title, onValueChange = { title = it },
                     placeholder = { Text("Topic Title...", fontSize = 28.sp, color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        cursorColor = Color(0xFF4ECCA3),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    ),
+                    colors = TextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent, cursorColor = Color(0xFF4ECCA3), focusedTextColor = Color.White, unfocusedTextColor = Color.White),
                     textStyle = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
                 )
-
-                HorizontalDivider(color = Color.White.copy(alpha = 0.1f), thickness = 1.dp)
-                
+                HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                 Spacer(modifier = Modifier.height(20.dp))
-
-                // Cornell Content Area
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(450.dp)
-                ) {
-                    // Cues Column
-                    OutlinedTextField(
-                        value = cues, onValueChange = { cues = it },
-                        label = { Text("Cues/Questions", color = Color(0xFF4ECCA3)) },
-                        modifier = Modifier.weight(0.4f).fillMaxHeight(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4ECCA3),
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        )
-                    )
-                    
+                Row(modifier = Modifier.fillMaxWidth().height(400.dp)) {
+                    OutlinedTextField(value = cues, onValueChange = { cues = it }, label = { Text("Cues", color = Color(0xFF4ECCA3)) }, modifier = Modifier.weight(0.4f).fillMaxHeight(), shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4ECCA3), unfocusedBorderColor = Color.White.copy(0.2f), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                     Spacer(modifier = Modifier.width(12.dp))
-
-                    // Main Notes Column
-                    OutlinedTextField(
-                        value = notes, onValueChange = { notes = it },
-                        label = { Text("Detailed Notes", color = Color(0xFF4ECCA3)) },
-                        modifier = Modifier.weight(0.6f).fillMaxHeight(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF4ECCA3),
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        )
-                    )
+                    OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes", color = Color(0xFF4ECCA3)) }, modifier = Modifier.weight(0.6f).fillMaxHeight(), shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4ECCA3), unfocusedBorderColor = Color.White.copy(0.2f), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
                 }
-
                 Spacer(modifier = Modifier.height(20.dp))
-
-                // Summary Area
-                OutlinedTextField(
-                    value = summary, onValueChange = { summary = it },
-                    label = { Text("Final Summary", color = Color(0xFF4ECCA3)) },
-                    modifier = Modifier.fillMaxWidth().height(160.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF4ECCA3),
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    )
-                )
-                
-                Spacer(modifier = Modifier.height(30.dp))
+                OutlinedTextField(value = summary, onValueChange = { summary = it }, label = { Text("Summary", color = Color(0xFF4ECCA3)) }, modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(16.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF4ECCA3), unfocusedBorderColor = Color.White.copy(0.2f), focusedTextColor = Color.White, unfocusedTextColor = Color.White))
             }
         }
     }
