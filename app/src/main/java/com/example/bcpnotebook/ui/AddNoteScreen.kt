@@ -126,7 +126,7 @@ fun AddNoteScreen(navController: NavController) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-    var title by remember { mutableState of("") }
+    var title by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf(TextFieldValue("")) }
     var cues by remember { mutableStateOf("") }
     var summary by remember { mutableStateOf("") }
@@ -179,8 +179,7 @@ fun AddNoteScreen(navController: NavController) {
                                 if (title.isNotEmpty()) {
                                     isLoading = true
                                     val noteRef = firestore.collection("users").document(userId).collection("notes").document()
-                                    // FIX: Changed val to var to assign id
-                                    var newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes.text, summary = summary, timestamp = System.currentTimeMillis())
+                                    val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes.text, summary = summary, timestamp = System.currentTimeMillis())
                                     noteRef.set(newNote).addOnSuccessListener {
                                         isLoading = false
                                         Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
@@ -231,7 +230,6 @@ fun AddNoteScreen(navController: NavController) {
                 for (i in 0..(size.height / spacing).toInt()) { val y = i * spacing + headerOffset; drawLine(lineBlue, Offset(0f, y), Offset(size.width, y), 1.dp.toPx()) }
             }) {
                 Spacer(modifier = Modifier.height(56.dp))
-                // FIX: Correct TextField colors parameter
                 val textFieldColors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent

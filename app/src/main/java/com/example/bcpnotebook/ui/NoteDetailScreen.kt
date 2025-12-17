@@ -157,7 +157,6 @@ fun NoteDetailScreen(navController: NavController, noteId: String?) {
                     Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 4.dp))
                     
                      Row(
-                        // FIX: Added horizontalScroll with rememberScrollState
                         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -199,7 +198,6 @@ fun NoteDetailScreen(navController: NavController, noteId: String?) {
                         }
                     }
             ) {
-                // FIX: Correct TextField colors parameter for all TextFields
                 val textFieldColors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent
@@ -242,4 +240,4 @@ fun NoteDetailScreen(navController: NavController, noteId: String?) {
             }
         }
     }
-}```
+}
