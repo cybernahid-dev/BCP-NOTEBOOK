@@ -46,9 +46,8 @@ fun AddNoteScreen(navController: NavController) {
     val marginRed = Color(0xFFFF9999)
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().imePadding(), // কিবোর্ড ফিক্স
+        modifier = Modifier.fillMaxSize().imePadding(),
         bottomBar = {
-            // Futuristic Glass Toolbar
             Surface(
                 modifier = Modifier.padding(16.dp),
                 shape = RoundedCornerShape(28.dp),
@@ -101,40 +100,50 @@ fun AddNoteScreen(navController: NavController) {
                     .verticalScroll(rememberScrollState())
                     .drawBehind {
                         val spacing = 32.dp.toPx()
-                        val headerHeight = 130.dp.toPx()
+                        val headerOffset = 150.dp.toPx()
+                        val summaryOffset = 220.dp.toPx()
                         
-                        // Horizontal Lines
+                        // Horizontal Blue Lines (Background Ruling)
                         for (i in 0..(size.height / spacing).toInt()) {
-                            val y = i * spacing + headerHeight
+                            val y = i * spacing + headerOffset
                             drawLine(lineBlue, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
                         }
                         
-                        // Red Margin Line (Stops before summary)
+                        // Vertical Red Margin (Stops precisely at Summary section)
                         val marginX = size.width * 0.28f
-                        drawLine(marginRed, Offset(marginX, headerHeight), Offset(marginX, size.height - 220.dp.toPx()), 2.dp.toPx())
+                        drawLine(
+                            marginRed, 
+                            Offset(marginX, headerOffset), 
+                            Offset(marginX, size.height - summaryOffset), 
+                            2.dp.toPx()
+                        )
+                        
+                        // Horizontal Red Line for Summary Divider
+                        val summaryY = size.height - summaryOffset
+                        drawLine(marginRed, Offset(0f, summaryY), Offset(size.width, summaryY), 2.dp.toPx())
                     }
             ) {
-                // Topic Title Section
+                // Topic Title
                 TextField(
                     value = title, onValueChange = { title = it },
-                    placeholder = { Text("Topic Title", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold) },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 15.dp),
-                    textStyle = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.ExtraBold),
+                    placeholder = { Text("Topic Title", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black.copy(0.4f)) },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
+                    textStyle = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold),
                     colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
                 )
 
-                // Cornell Body
+                // Main Body: Cues and Notes
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp)) {
-                    // Cues Column
-                    Box(modifier = Modifier.weight(0.28f).padding(start = 10.dp)) {
+                    // Left Side: Cues Area
+                    Box(modifier = Modifier.weight(0.28f).padding(start = 12.dp)) {
                         TextField(
                             value = cues, onValueChange = { cues = it },
-                            placeholder = { Text("CUES", fontWeight = FontWeight.Bold, color = marginRed.copy(0.7f)) },
+                            placeholder = { Text("CUES", fontWeight = FontWeight.Bold, color = marginRed.copy(0.8f), fontSize = 14.sp) },
                             colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
                         )
                     }
-                    // Main Notes Column
-                    Box(modifier = Modifier.weight(0.72f)) {
+                    // Right Side: Notes Area
+                    Box(modifier = Modifier.weight(0.72f).padding(start = 8.dp)) {
                         TextField(
                             value = notes, onValueChange = { notes = it },
                             placeholder = { Text("Take detailed notes here...") },
@@ -145,30 +154,28 @@ fun AddNoteScreen(navController: NavController) {
                     }
                 }
 
-                // Summary Section (Clean and Professional Placement)
-                Divider(color = marginRed, thickness = 2.dp, modifier = Modifier.padding(horizontal = 10.dp))
+                // Professional Summary Section (Full Width, No Vertical Red Line)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(250.dp)
-                        .background(Color.Black.copy(alpha = 0.02f))
-                        .padding(20.dp)
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
                 ) {
                     Column {
                         Text("SUMMARY", fontSize = 14.sp, fontWeight = FontWeight.Black, color = marginRed)
                         TextField(
                             value = summary, onValueChange = { summary = it },
-                            placeholder = { Text("Summarize key points here...", color = Color.Gray.copy(0.5f)) },
+                            placeholder = { Text("Summarize the key points here...", color = Color.Gray.copy(0.5f)) },
                             modifier = Modifier.fillMaxSize(),
                             colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(50.dp))
+                Spacer(modifier = Modifier.height(60.dp))
             }
 
-            // Back Button
-            IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.padding(10.dp)) {
+            // Navigation
+            IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.padding(12.dp)) {
                 Icon(Icons.Default.ArrowBack, null, tint = Color.Black)
             }
         }
