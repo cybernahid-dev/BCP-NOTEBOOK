@@ -25,6 +25,7 @@ fun AddNoteScreen(navController: NavController) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     val auth = FirebaseAuth.getInstance()
+    val userId = auth.currentUser?.uid ?: ""
     
     var title by remember { mutableStateOf("") }
     var cues by remember { mutableStateOf("") }
@@ -42,11 +43,13 @@ fun AddNoteScreen(navController: NavController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
+                    IconButton(
+                        enabled = !isLoading,
+                        onClick = {
                         if (title.isNotEmpty() && notes.isNotEmpty()) {
                             isLoading = true
-                            val userId = auth.currentUser?.uid ?: ""
-                            val noteRef = firestore.collection("notes").document()
+                            // আপনার সিকিউর রুলস অনুযায়ী পাথ সেট করা হলো
+                            val noteRef = firestore.collection("users").document(userId).collection("notes").document()
                             val newNote = Note(
                                 id = noteRef.id,
                                 userId = userId,
@@ -56,69 +59,34 @@ fun AddNoteScreen(navController: NavController) {
                                 summary = summary
                             )
                             
-                            noteRef.set(newNote).addOnCompleteListener { task ->
+                            noteRef.set(newNote).addOnSuccessListener {
+                                Toast.makeText(context, "Successfully Saved!", Toast.LENGTH_SHORT).show()
+                                navController.popBackStack()
+                            }.addOnFailureListener {
                                 isLoading = false
-                                if (task.isSuccessful) {
-                                    Toast.makeText(context, "Note Saved!", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
-                                } else {
-                                    Toast.makeText(context, "Error saving note", Toast.LENGTH_SHORT).show()
-                                }
+                                Toast.makeText(context, "Failed: ${it.message}", Toast.LENGTH_SHORT).show()
                             }
                         } else {
                             Toast.makeText(context, "Title and Notes are required", Toast.LENGTH_SHORT).show()
                         }
                     }) {
-                        if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Check, contentDescription = "Save")
-                        }
+                        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        else Icon(Icons.Default.Check, contentDescription = "Save")
                     }
                 }
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            OutlinedTextField(
-                value = title, onValueChange = { title = it },
-                label = { Text("Topic / Title") },
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = LocalTextStyle.current.copy(fontWeight = FontWeight.Bold, fontSize = 18.sp)
-            )
-            
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState())) {
+            OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Topic / Title") }, modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-                OutlinedTextField(
-                    value = cues, 
-                    onValueChange = { cues = it },
-                    label = { Text("Cues") },
-                    modifier = Modifier.weight(0.4f).fillMaxHeight()
-                )
+            Row(modifier = Modifier.fillMaxWidth().height(250.dp)) {
+                OutlinedTextField(value = cues, onValueChange = { cues = it }, label = { Text("Cues") }, modifier = Modifier.weight(0.4f).fillMaxHeight())
                 Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = notes, 
-                    onValueChange = { notes = it },
-                    label = { Text("Main Notes") },
-                    modifier = Modifier.weight(0.6f).fillMaxHeight()
-                )
+                OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Main Notes") }, modifier = Modifier.weight(0.6f).fillMaxHeight())
             }
-            
             Spacer(modifier = Modifier.height(16.dp))
-            
-            OutlinedTextField(
-                value = summary, 
-                onValueChange = { summary = it },
-                label = { Text("Summary") },
-                modifier = Modifier.fillMaxWidth().height(150.dp)
-            )
+            OutlinedTextField(value = summary, onValueChange = { summary = it }, label = { Text("Summary") }, modifier = Modifier.fillMaxWidth().height(150.dp))
         }
     }
 }
