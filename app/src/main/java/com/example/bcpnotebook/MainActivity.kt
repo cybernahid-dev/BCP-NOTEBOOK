@@ -23,6 +23,10 @@ class MainActivity : ComponentActivity() {
                     composable("registration") { RegistrationScreen(navController) }
                     composable("notebook") { NotebookScreen(navController) }
                     composable("add_note") { AddNoteScreen(navController) }
+                    composable("note_detail/{noteId}") { backStackEntry -> 
+                        val noteId = backStackEntry.arguments?.getString("noteId") 
+                        NoteDetailScreen(navController, noteId) 
+                    }
                 }
             }
         }

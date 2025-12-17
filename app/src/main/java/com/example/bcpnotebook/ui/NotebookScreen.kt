@@ -32,7 +32,6 @@ fun NotebookScreen(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val userId = auth.currentUser?.uid ?: ""
     var notesList by remember { mutableStateOf<List<Note>>(emptyList()) }
-    var selectedNote by remember { mutableStateOf<Note?>(null) }
 
     LaunchedEffect(userId) {
         if (userId.isNotEmpty()) {
@@ -62,7 +61,13 @@ fun NotebookScreen(navController: NavController) {
             LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
                 items(notesList) { note ->
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).clickable { selectedNote = note },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                            .clickable { 
+                                // এখানে নোট ডিটেইলস পেজে নেভিগেট করা হচ্ছে
+                                navController.navigate("note_detail/${note.id}") 
+                            },
                         elevation = CardDefaults.cardElevation(4.dp)
                     ) {
                         Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -81,28 +86,5 @@ fun NotebookScreen(navController: NavController) {
                 }
             }
         }
-    }
-
-    if (selectedNote != null) {
-        AlertDialog(
-            onDismissRequest = { selectedNote = null },
-            title = { Text(selectedNote!!.title, fontWeight = FontWeight.Bold) },
-            text = {
-                val scrollState = rememberScrollState()
-                Column(modifier = Modifier.verticalScroll(scrollState)) {
-                    Text("Cues:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    Text(selectedNote!!.cues)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Main Notes:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    Text(selectedNote!!.notes)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Summary:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                    Text(selectedNote!!.summary)
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { selectedNote = null }) { Text("Close") }
-            }
-        )
     }
 }
