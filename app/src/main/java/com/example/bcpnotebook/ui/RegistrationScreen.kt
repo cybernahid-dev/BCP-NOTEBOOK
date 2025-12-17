@@ -22,6 +22,7 @@ import com.example.bcpnotebook.ui.theme.*
 import com.example.bcpnotebook.utils.NetworkUtils
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 
@@ -44,18 +45,21 @@ fun RegistrationScreen(navController: NavController) {
         if (result.resultCode == Activity.RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
-                val account = task.result
+                val account = task.getResult(ApiException::class.java)!!
                 val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-                if (NetworkUtils.isInternetAvailable(context)) {
-                    auth.signInWithCredential(credential).addOnCompleteListener { 
-                        if (it.isSuccessful) {
-                            Toast.makeText(context, "Registration Successful!", Toast.LENGTH_SHORT).show()
-                            navController.navigate("notebook") { popUpTo("registration") { inclusive = true } }
-                        }
+                
+                isLoading = true
+                auth.signInWithCredential(credential).addOnCompleteListener { task ->
+                    isLoading = false
+                    if (task.isSuccessful) {
+                        Toast.makeText(context, "Registration Successful with Google!", Toast.LENGTH_SHORT).show()
+                        navController.navigate("notebook") { popUpTo("registration") { inclusive = true } }
+                    } else {
+                        Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                     }
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, "Registration Failed", Toast.LENGTH_SHORT).show()
+            } catch (e: ApiException) {
+                Toast.makeText(context, "Google Registration Cancelled", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -84,19 +88,17 @@ fun RegistrationScreen(navController: NavController) {
                             if (it.isSuccessful) {
                                 Toast.makeText(context, "Account Created!", Toast.LENGTH_SHORT).show()
                                 navController.navigate("notebook") { popUpTo("registration") { inclusive = true } }
-                            } else {
-                                Toast.makeText(context, "Registration Failed: ${it.exception?.message}", Toast.LENGTH_SHORT).show()
-                            }
+                            } else Toast.makeText(context, "Failed: ${it.exception?.message}", Toast.LENGTH_SHORT).show()
                         }
                     }
-                } else Toast.makeText(context, "Internet connection needed!", Toast.LENGTH_SHORT).show()
+                } else Toast.makeText(context, "Offline: Check connection", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = SoftBlue),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = SoftBlue)
         ) {
             if (isLoading) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-            else Text("SIGN UP", fontWeight = FontWeight.Bold)
+            else Text("SIGN UP")
         }
 
         Spacer(modifier = Modifier.height(15.dp))
@@ -106,14 +108,10 @@ fun RegistrationScreen(navController: NavController) {
         OutlinedButton(
             onClick = { 
                 if (NetworkUtils.isInternetAvailable(context)) launcher.launch(googleSignInClient.signInIntent)
-                else Toast.makeText(context, "Internet connection needed!", Toast.LENGTH_SHORT).show()
+                else Toast.makeText(context, "No Internet!", Toast.LENGTH_SHORT).show()
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(12.dp)
         ) { Text("Sign Up with Google", color = TextPrimary) }
-
-        TextButton(onClick = { navController.navigate("login") }) {
-            Text("Already have an account? Log In", color = SoftBlue, fontWeight = FontWeight.Bold)
-        }
     }
 }
