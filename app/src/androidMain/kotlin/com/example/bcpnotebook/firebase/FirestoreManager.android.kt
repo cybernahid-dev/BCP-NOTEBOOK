@@ -18,7 +18,7 @@ actual class FirestoreManager {
             } else {
                 notesCollection.document(note.id).set(note)
             }
-        } catch (e: Exception) { println(e.message) }
+        } catch (e: Exception) { }
     }
 
     actual suspend fun getNotes(): List<NoteModel> {
