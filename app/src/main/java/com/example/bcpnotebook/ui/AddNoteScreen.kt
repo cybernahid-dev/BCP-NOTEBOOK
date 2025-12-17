@@ -12,12 +12,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-// FIX: Import extended icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
 import androidx.compose.material.icons.automirrored.filled.FormatAlignCenter
+import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
 import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +45,7 @@ import androidx.navigation.NavController
 import com.example.bcpnotebook.model.Note
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.io.FileOutputStream
 
 // Helper functions remain the same...
 private fun createPdfFromContent(title: String, content: AnnotatedString, context: android.content.Context) {
@@ -126,7 +126,7 @@ fun AddNoteScreen(navController: NavController) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-    var title by remember { mutableStateOf("") }
+    var title by remember { mutableState of("") }
     var notes by remember { mutableStateOf(TextFieldValue("")) }
     var cues by remember { mutableStateOf("") }
     var summary by remember { mutableStateOf("") }
@@ -178,9 +178,9 @@ fun AddNoteScreen(navController: NavController) {
                             Button(onClick = {
                                 if (title.isNotEmpty()) {
                                     isLoading = true
-                                    val newNote = Note(id = "", userId = userId, title = title, cues = cues, notes = notes.text, summary = summary, timestamp = System.currentTimeMillis())
                                     val noteRef = firestore.collection("users").document(userId).collection("notes").document()
-                                    newNote.id = noteRef.id
+                                    // FIX: Changed val to var to assign id
+                                    var newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes.text, summary = summary, timestamp = System.currentTimeMillis())
                                     noteRef.set(newNote).addOnSuccessListener {
                                         isLoading = false
                                         Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
@@ -234,8 +234,7 @@ fun AddNoteScreen(navController: NavController) {
                 // FIX: Correct TextField colors parameter
                 val textFieldColors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent
+                    focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent
                 )
                 TextField(value = title, onValueChange = { title = it }, placeholder = { Text("Topic Title", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black.copy(0.4f)) }, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp), textStyle = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold), colors = textFieldColors)
                 Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp).drawBehind {
