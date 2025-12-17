@@ -31,9 +31,11 @@ fun AddNoteScreen(navController: NavController) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-    var notes by remember { mutableStateOf("") }
-    var cues by remember { mutableStateOf("") }
+    
     var title by remember { mutableStateOf("") }
+    var cues by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var summary by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
     var fontSizeVal by remember { mutableStateOf(18) }
@@ -50,53 +52,68 @@ fun AddNoteScreen(navController: NavController) {
                 .verticalScroll(rememberScrollState())
                 .drawBehind {
                     val spacing = 32.dp.toPx()
+                    val headerHeight = 160.dp.toPx()
+                    
+                    // Horizontal Ruling Lines
                     for (i in 0..(size.height / spacing).toInt()) {
-                        val y = i * spacing + 140.dp.toPx()
+                        val y = i * spacing + headerHeight
                         drawLine(lineBlue, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
                     }
+                    
+                    // Vertical Cornell Margin Line
                     val marginX = size.width * 0.30f
-                    drawLine(marginRed, Offset(marginX, 0f), Offset(marginX, size.height), 2.dp.toPx())
+                    drawLine(marginRed, Offset(marginX, headerHeight), Offset(marginX, size.height - 180.dp.toPx()), 2.dp.toPx())
+                    
+                    // Summary Section Horizontal Line
+                    val summaryTopY = size.height - 180.dp.toPx()
+                    drawLine(marginRed, Offset(0f, summaryTopY), Offset(size.width, summaryTopY), 2.dp.toPx())
                 }
         ) {
+            // 1. Header: Topic Title (Now adjusted to stay outside margins)
             TextField(
                 value = title, onValueChange = { title = it },
-                placeholder = { Text("Topic Title", fontSize = 32.sp, fontWeight = FontWeight.Black) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
-                textStyle = TextStyle(fontSize = 32.sp, fontWeight = FontWeight.Black),
-                colors = TextFieldDefaults.textFieldColors(
-                    containerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
+                placeholder = { Text("Topic Title", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.Gray.copy(0.6f)) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 30.dp),
+                textStyle = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Black),
+                colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
             )
 
-            Row(modifier = Modifier.fillMaxWidth().heightIn(min = 1000.dp)) {
-                Box(modifier = Modifier.weight(0.30f)) {
+            // 2. Cornell Main Body (Cues and Notes)
+            Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp)) {
+                // Left side: Cues
+                Box(modifier = Modifier.weight(0.30f).padding(start = 10.dp)) {
                     TextField(
                         value = cues, onValueChange = { cues = it },
-                        placeholder = { Text("CUES", fontWeight = FontWeight.Bold) },
-                        colors = TextFieldDefaults.textFieldColors(
-                            containerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        )
+                        placeholder = { Text("CUES / Qs", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = marginRed) },
+                        colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
                     )
                 }
+                // Right side: Main Notes
                 Box(modifier = Modifier.weight(0.70f)) {
                     TextField(
                         value = notes, onValueChange = { notes = it },
-                        placeholder = { Text("Start taking notes...") },
+                        placeholder = { Text("Take detailed notes here...", color = Color.Gray.copy(0.4f)) },
                         textStyle = TextStyle(fontSize = fontSizeVal.sp, fontFamily = selectedFont, lineHeight = 32.sp),
-                        colors = TextFieldDefaults.textFieldColors(
-                            containerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        )
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
                     )
                 }
             }
+
+            // 3. Summary Section (Added New)
+            Column(modifier = Modifier.fillMaxWidth().padding(top = 20.dp).height(250.dp)) {
+                Text("SUMMARY", modifier = Modifier.padding(start = 20.dp), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                TextField(
+                    value = summary, onValueChange = { summary = it },
+                    placeholder = { Text("Summarize the key points here...", color = Color.Gray.copy(0.4f)) },
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                    colors = TextFieldDefaults.textFieldColors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
+                )
+            }
+            Spacer(modifier = Modifier.height(100.dp)) // Extra space for floating toolbar
         }
 
+        // --- Futuristic Glass Toolbar ---
         Surface(
             modifier = Modifier.align(Alignment.BottomCenter).padding(20.dp).navigationBarsPadding().imePadding(),
             shape = RoundedCornerShape(28.dp),
@@ -108,19 +125,14 @@ fun AddNoteScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(15.dp)
             ) {
-                // Using only the most basic icons guaranteed in all versions
                 IconButton(onClick = { selectedFont = if(selectedFont == FontFamily.SansSerif) FontFamily.Serif else FontFamily.SansSerif }) { 
                     Icon(Icons.Default.Menu, null, tint = Color.White) 
                 }
                 IconButton(onClick = { if(fontSizeVal < 30) fontSizeVal += 2 else fontSizeVal = 16 }) { 
                     Icon(Icons.Default.Add, null, tint = Color.White) 
                 }
-                IconButton(onClick = { }) { 
-                    Icon(Icons.Default.Build, null, tint = Color.Cyan) 
-                }
-                IconButton(onClick = { }) { 
-                    Icon(Icons.Default.Info, null, tint = Color.White) 
-                }
+                IconButton(onClick = { }) { Icon(Icons.Default.Build, null, tint = Color.Cyan) }
+                IconButton(onClick = { }) { Icon(Icons.Default.Info, null, tint = Color.White) }
                 
                 VerticalDivider(modifier = Modifier.height(24.dp), color = Color.DarkGray)
                 
@@ -129,7 +141,7 @@ fun AddNoteScreen(navController: NavController) {
                         if (title.isNotEmpty()) {
                             isLoading = true
                             val noteRef = firestore.collection("users").document(userId).collection("notes").document()
-                            val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes, summary = "", timestamp = System.currentTimeMillis())
+                            val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes, summary = summary, timestamp = System.currentTimeMillis())
                             noteRef.set(newNote).addOnSuccessListener {
                                 isLoading = false
                                 Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
