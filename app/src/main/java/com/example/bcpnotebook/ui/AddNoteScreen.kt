@@ -1,7 +1,13 @@
 package com.example.bcpnotebook.ui
 
+import android.content.ContentValues
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import android.os.Environment
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,19 +17,128 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.bcpnotebook.model.Note
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.io.FileOutputStream
+
+// Helper function to create and save PDF
+private fun createPdfFromContent(
+    title: String,
+    content: AnnotatedString,
+    context: android.content.Context
+) {
+    if (title.isBlank()) {
+        Toast.makeText(context, "Please enter a title before exporting.", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    val document = PdfDocument()
+    val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 page size
+    val page = document.startPage(pageInfo)
+    val canvas = page.canvas
+
+    val paint = Paint()
+    var yPosition = 40f
+    val leftMargin = 40f
+    val rightMargin = 595 - 40f
+
+    // Draw Title
+    paint.textSize = 24f
+    paint.isFakeBoldText = true
+    canvas.drawText(title, leftMargin, yPosition, paint)
+    yPosition += 50f
+    paint.isFakeBoldText = false
+    paint.textSize = 12f
+
+    // Draw Content from AnnotatedString
+    content.spanStyles.forEach { (style, start, end) ->
+        val textPart = content.text.substring(start, end)
+        paint.color = style.color.toArgb()
+        paint.isFakeBoldText = style.fontWeight == FontWeight.Bold
+        paint.isUnderlineText = style.textDecoration == TextDecoration.Underline
+        paint.fontFeatureSettings = if (style.fontStyle == FontStyle.Italic) "italic" else "normal"
+        // Font family support is complex in native PDF canvas, this is a basic approximation
+        
+        // Simple word wrapping logic
+        var currentLine = ""
+        textPart.split(" ").forEach { word ->
+            if (paint.measureText("$currentLine $word") < (rightMargin - leftMargin)) {
+                currentLine += "$word "
+            } else {
+                canvas.drawText(currentLine, leftMargin, yPosition, paint)
+                yPosition += paint.fontSpacing
+                currentLine = "$word "
+            }
+        }
+        canvas.drawText(currentLine, leftMargin, yPosition, paint)
+        yPosition += paint.fontSpacing
+    }
+
+
+    document.finishPage(page)
+
+    // Save the PDF to the Downloads folder
+    val fileName = "${title.replace(" ", "_")}_${System.currentTimeMillis()}.pdf"
+    val contentValues = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+        put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+    }
+
+    val resolver = context.contentResolver
+    val uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
+
+    if (uri != null) {
+        try {
+            resolver.openOutputStream(uri).use { outputStream ->
+                document.writeTo(outputStream)
+                Toast.makeText(context, "PDF saved to Downloads folder!", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Error saving PDF: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    document.close()
+}
+
+
+// Helper function to apply style to the selected text remains the same
+fun applyStyleToSelection(
+    textFieldValue: TextFieldValue,
+    style: SpanStyle
+): TextFieldValue {
+    val selection = textFieldValue.selection
+    if (!selection.collapsed) {
+        val newAnnotatedString = buildAnnotatedString {
+            append(textFieldValue.annotatedString)
+            addStyle(style, selection.start, selection.end)
+        }
+        return textFieldValue.copy(annotatedString = newAnnotatedString)
+    }
+    return textFieldValue
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,17 +148,30 @@ fun AddNoteScreen(navController: NavController) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
     var title by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf(TextFieldValue("")) }
     var cues by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
     var summary by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    var fontSizeVal by remember { mutableStateOf(18) }
-    var selectedFont by remember { mutableStateOf(FontFamily.SansSerif) }
+    // Toolbar state
+    var isBold by remember { mutableStateOf(false) }
+    var isItalic by remember { mutableStateOf(false) }
+    var isUnderlined by remember { mutableStateOf(false) }
+    var textAlign by remember { mutableStateOf(TextAlign.Start) }
+    var isFontMenuExpanded by remember { mutableStateOf(false) }
+    var isColorMenuExpanded by remember { mutableStateOf(false) }
+    var selectedFontFamily by remember { mutableStateOf(FontFamily.Default) }
+
+    var scale by remember { mutableStateOf(1f) }
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
 
     val paperColor = Color(0xFFFCF5E5)
     val lineBlue = Color(0xFFD1E4EC)
     val marginRed = Color(0xFFFF9999)
+
+    val fontFamilies = listOf(FontFamily.Default, FontFamily.Serif, FontFamily.Cursive, FontFamily.Monospace)
+    val textColors = listOf(Color.Black, Color.Red, Color.Blue, Color.Green, Color(0xFF9C27B0))
 
     Scaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
@@ -54,156 +182,137 @@ fun AddNoteScreen(navController: NavController) {
                 color = Color.Black.copy(alpha = 0.9f),
                 tonalElevation = 10.dp
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        IconButton(onClick = { selectedFont = if(selectedFont == FontFamily.SansSerif) FontFamily.Serif else FontFamily.SansSerif }) {
-                            Icon(Icons.Default.Menu, null, tint = Color.White)
-                        }
-                        IconButton(onClick = { if(fontSizeVal < 30) fontSizeVal += 2 else fontSizeVal = 16 }) {
-                            Icon(Icons.Default.Add, null, tint = Color.White)
-                        }
-                        IconButton(onClick = { }) { Icon(Icons.Default.Build, null, tint = Color.Cyan) }
-                        IconButton(onClick = { }) { Icon(Icons.Default.Info, null, tint = Color.White) }
-                    }
-
-                    Button(
-                        onClick = {
-                            if (title.isNotEmpty()) {
-                                isLoading = true
-                                val noteRef = firestore.collection("users").document(userId).collection("notes").document()
-                                val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes, summary = summary, timestamp = System.currentTimeMillis())
-                                noteRef.set(newNote).addOnSuccessListener {
-                                    isLoading = false
-                                    Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
-                                    navController.popBackStack()
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Box {
+                            Button(onClick = { isFontMenuExpanded = true }, colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)) {
+                                Text(selectedFontFamily.javaClass.simpleName.replace("FontFamily", ""), color = Color.White)
+                                Icon(Icons.Default.ArrowDropDown, null, tint = Color.White)
+                            }
+                            DropdownMenu(expanded = isFontMenuExpanded, onDismissRequest = { isFontMenuExpanded = false }) {
+                                fontFamilies.forEach { font ->
+                                    DropdownMenuItem(
+                                        text = { Text(font.javaClass.simpleName.replace("FontFamily", "")) },
+                                        onClick = {
+                                            selectedFontFamily = font
+                                            isFontMenuExpanded = false
+                                            notes = applyStyleToSelection(notes, SpanStyle(fontFamily = font))
+                                        }
+                                    )
                                 }
                             }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
-                        shape = CircleShape
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                           IconButton(onClick = {
+                               scale = 1f; offsetX = 0f; offsetY = 0f
+                           }) {
+                                Icon(Icons.Default.ZoomOutMap, contentDescription = "Reset Zoom", tint = Color.White)
+                           }
+                           
+                           // NEW: Export to PDF button
+                           IconButton(onClick = {
+                               createPdfFromContent(title, notes.annotatedString, context)
+                           }) {
+                               Icon(Icons.Default.Download, contentDescription = "Export as PDF", tint = Color.White)
+                           }
+
+                           Button(
+                                onClick = {
+                                    if (title.isNotEmpty()) {
+                                        isLoading = true
+                                        val noteRef = firestore.collection("users").document(userId).collection("notes").document()
+                                        val newNote = Note(id = noteRef.id, userId = userId, title = title, cues = cues, notes = notes.text, summary = summary, timestamp = System.currentTimeMillis())
+                                        noteRef.set(newNote)
+                                            .addOnSuccessListener {
+                                                isLoading = false
+                                                Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
+                                                navController.popBackStack()
+                                            }
+                                            .addOnFailureListener { e ->
+                                                isLoading = false
+                                                Toast.makeText(context, "Failed to save: ${e.message}", Toast.LENGTH_LONG).show()
+                                            }
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF007AFF)),
+                                shape = CircleShape
+                            ) {
+                                if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                                else Text("SAVE", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
-                        else Text("SAVE", fontWeight = FontWeight.Bold)
+                        // All other styling buttons remain the same
+                        IconButton(onClick = { isBold = !isBold; notes = applyStyleToSelection(notes, SpanStyle(fontWeight = if (!isBold) FontWeight.Bold else FontWeight.Normal)) }, modifier = Modifier.background(if(isBold) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatBold, null, tint = Color.White) }
+                        IconButton(onClick = { isItalic = !isItalic; notes = applyStyleToSelection(notes, SpanStyle(fontStyle = if (!isItalic) FontStyle.Italic else FontStyle.Normal)) }, modifier = Modifier.background(if(isItalic) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatItalic, null, tint = Color.White) }
+                        IconButton(onClick = { isUnderlined = !isUnderlined; notes = applyStyleToSelection(notes, SpanStyle(textDecoration = if (!isUnderlined) TextDecoration.Underline else TextDecoration.None)) }, modifier = Modifier.background(if(isUnderlined) Color.Gray else Color.Transparent, CircleShape)) { Icon(Icons.Default.FormatUnderlined, null, tint = Color.White) }
+                        Box {
+                             IconButton(onClick = { isColorMenuExpanded = true }) { Icon(Icons.Default.FormatColorText, null, tint = Color.White) }
+                             DropdownMenu(expanded = isColorMenuExpanded, onDismissRequest = { isColorMenuExpanded = false }) {
+                                 Row(modifier = Modifier.padding(8.dp)) {
+                                     textColors.forEach { color -> Box(modifier = Modifier.size(32.dp).padding(4.dp).clip(CircleShape).background(color).clickable { notes = applyStyleToSelection(notes, SpanStyle(color = color)); isColorMenuExpanded = false }) }
+                                 }
+                             }
+                        }
+                        IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.Default.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
+                        IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.Default.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
+                        IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.Default.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
                     }
                 }
             }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().background(paperColor).padding(innerPadding)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .drawBehind {
-                        val spacing = 32.dp.toPx()
-                        val headerOffset = 120.dp.toPx() // Adjusted offset for blue lines to start after title
-
-                        // Horizontal Blue Lines (Background Ruling)
-                        for (i in 0..(size.height / spacing).toInt()) {
-                            val y = i * spacing + headerOffset
-                            drawLine(lineBlue, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
-                        }
-                    }
-            ) {
-                // FIX 1: Add Spacer to prevent title from overlapping with the back button
-                Spacer(modifier = Modifier.height(56.dp))
-
-                // Topic Title
-                TextField(
-                    value = title, onValueChange = { title = it },
-                    placeholder = { Text("Topic Title", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black.copy(0.4f)) },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
-                    textStyle = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                )
-
-                // Main Body: Cues and Notes
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 600.dp)
-                        .drawBehind {
-                            // FIX 2: Vertical red line is now drawn only within this Row's bounds
-                            val marginX = size.width * 0.28f
-                            drawLine(
-                                color = marginRed,
-                                start = Offset(marginX, 0f),
-                                end = Offset(marginX, size.height),
-                                strokeWidth = 2.dp.toPx()
-                            )
-                        }
-                ) {
-                    // Left Side: Cues Area
-                    Box(modifier = Modifier.weight(0.28f).padding(start = 12.dp)) {
-                        TextField(
-                            value = cues, onValueChange = { cues = it },
-                            placeholder = { Text("CUES", fontWeight = FontWeight.Bold, color = marginRed.copy(0.8f), fontSize = 14.sp) },
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            )
-                        )
-                    }
-                    // Right Side: Notes Area
-                    Box(modifier = Modifier.weight(0.72f).padding(start = 8.dp)) {
-                        TextField(
-                            value = notes, onValueChange = { notes = it },
-                            placeholder = { Text("Take detailed notes here...") },
-                            textStyle = TextStyle(fontSize = fontSizeVal.sp, fontFamily = selectedFont, lineHeight = 32.sp),
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            )
-                        )
-                    }
+        // The main content Box with zooming and panning remains the same
+        Box(
+            modifier = Modifier.fillMaxSize().background(paperColor).padding(innerPadding).pointerInput(Unit) {
+                detectTransformGestures { _, pan, zoom, _ ->
+                    scale = (scale * zoom).coerceIn(1f, 3f)
+                    if (scale > 1f) {
+                        val maxOffsetX = (size.width * (scale - 1)) / 2; val maxOffsetY = (size.height * (scale - 1)) / 2
+                        offsetX = (offsetX + pan.x).coerceIn(-maxOffsetX, maxOffsetX)
+                        offsetY = (offsetY + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
+                    } else { offsetX = 0f; offsetY = 0f }
                 }
-
-                // FIX 2: Explicit horizontal divider for the summary section
+            }
+        ) {
+            // The Column with note content remains the same
+            Column(
+                modifier = Modifier.graphicsLayer(scaleX = scale, scaleY = scale, translationX = offsetX, translationY = offsetY).fillMaxSize().verticalScroll(rememberScrollState()).drawBehind {
+                    val spacing = 32.dp.toPx(); val headerOffset = 120.dp.toPx()
+                    for (i in 0..(size.height / spacing).toInt()) { val y = i * spacing + headerOffset; drawLine(lineBlue, Offset(0f, y), Offset(size.width, y), 1.dp.toPx()) }
+                }
+            ) {
+                Spacer(modifier = Modifier.height(56.dp))
+                TextField(value = title, onValueChange = { title = it }, placeholder = { Text("Topic Title", fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black.copy(0.4f)) }, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp), textStyle = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold), colors = TextFieldDefaults.colors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent))
+                Row(modifier = Modifier.fillMaxWidth().heightIn(min = 600.dp).drawBehind {
+                    val marginX = size.width * 0.28f; drawLine(color = marginRed, start = Offset(marginX, 0f), end = Offset(marginX, size.height), strokeWidth = 2.dp.toPx())
+                }) {
+                    Box(modifier = Modifier.weight(0.28f).padding(start = 12.dp)) { TextField(value = cues, onValueChange = { cues = it }, placeholder = { Text("CUES", fontWeight = FontWeight.Bold, color = marginRed.copy(0.8f), fontSize = 14.sp) }, colors = TextFieldDefaults.colors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)) }
+                    Box(modifier = Modifier.weight(0.72f).padding(start = 8.dp)) { TextField(value = notes, onValueChange = { notes = it }, placeholder = { Text("Take detailed notes here...") }, textStyle = TextStyle(fontSize = 18.sp, fontFamily = selectedFontFamily, lineHeight = 32.sp, textAlign = textAlign), modifier = Modifier.fillMaxWidth(), colors = TextFieldDefaults.colors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)) }
+                }
                 Divider(color = marginRed, thickness = 2.dp)
-
-                // Professional Summary Section (Full Width, No Vertical Red Line)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                ) {
+                Box(modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 20.dp, vertical = 10.dp)) {
                     Column {
                         Text("SUMMARY", fontSize = 14.sp, fontWeight = FontWeight.Black, color = marginRed)
-                        TextField(
-                            value = summary, onValueChange = { summary = it },
-                            placeholder = { Text("Summarize the key points here...", color = Color.Gray.copy(0.5f)) },
-                            modifier = Modifier.fillMaxSize(),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            )
-                        )
+                        TextField(value = summary, onValueChange = { summary = it }, placeholder = { Text("Summarize the key points here...", color = Color.Gray.copy(0.5f)) }, modifier = Modifier.fillMaxSize(), colors = TextFieldDefaults.colors(containerColor = Color.Transparent, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent))
                     }
                 }
                 Spacer(modifier = Modifier.height(60.dp))
             }
-
-            // Navigation
-            IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.padding(12.dp)) {
-                Icon(Icons.Default.ArrowBack, null, tint = Color.Black)
-            }
+            IconButton(onClick = { navController.popBackStack() }, modifier = Modifier.align(Alignment.TopStart).padding(12.dp)) { Icon(Icons.Default.ArrowBack, null, tint = Color.Black) }
         }
     }
 }
