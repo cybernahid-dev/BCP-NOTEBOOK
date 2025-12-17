@@ -10,13 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-// =================== ಅತ್ಯಂತ গুরুত্বপূর্ণ IMPORT ===================
-// এই লাইনগুলো নিশ্চিত করুন যে আপনার ফাইলে আছে
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.FormatAlignCenter
-import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
-import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
-// =============================================================
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -120,9 +114,9 @@ fun NoteDetailScreen(navController: NavController, noteId: String?) {
                             Row(modifier = Modifier.padding(8.dp)) { textColors.forEach { color -> Box(modifier = Modifier.size(32.dp).padding(4.dp).clip(CircleShape).background(color).clickable { noteContent = applyStyleToSelection(noteContent, androidx.compose.ui.text.SpanStyle(color = color)); isColorMenuExpanded = false }) } }
                         }
                     }
-                    IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.AutoMirrored.Filled.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
-                    IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.AutoMirrored.Filled.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
-                    IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.AutoMirrored.Filled.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.Default.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.Default.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.Default.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
                 }
             }
         }

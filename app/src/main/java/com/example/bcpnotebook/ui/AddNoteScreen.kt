@@ -12,13 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-// =================== ಅತ್ಯಂತ গুরুত্বপূর্ণ IMPORT ===================
-// এই লাইনগুলো নিশ্চিত করুন যে আপনার ফাইলে আছে
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.FormatAlignCenter
-import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
-import androidx.compose.material.icons.automirrored.filled.FormatAlignRight
-// =============================================================
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -50,7 +44,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.FileOutputStream
 
-// Helper functions...
 private fun createPdfFromContent(title: String, content: AnnotatedString, context: android.content.Context) {
     if (title.isBlank()) { Toast.makeText(context, "Please enter a title before exporting.", Toast.LENGTH_SHORT).show(); return }
     val document = PdfDocument()
@@ -69,8 +62,8 @@ private fun createPdfFromContent(title: String, content: AnnotatedString, contex
         paint.fontFeatureSettings = if (style.fontStyle == FontStyle.Italic) "italic" else "normal"
         var currentLine = ""
         textPart.split(" ").forEach { word ->
-            if (paint.measureText("$currentLine $word") < (rightMargin - leftMargin)) currentLine += "$word "
-            else { canvas.drawText(currentLine, leftMargin, yPosition, paint); yPosition += paint.fontSpacing; currentLine = "$word " }
+            if (paint.measureText(" ") < (rightMargin - leftMargin)) currentLine += " "
+            else { canvas.drawText(currentLine, leftMargin, yPosition, paint); yPosition += paint.fontSpacing; currentLine = " " }
         }
         canvas.drawText(currentLine, leftMargin, yPosition, paint); yPosition += paint.fontSpacing
     }
@@ -165,9 +158,9 @@ fun AddNoteScreen(navController: NavController) {
                             Row(modifier = Modifier.padding(8.dp)) { textColors.forEach { color -> Box(modifier = Modifier.size(32.dp).padding(4.dp).clip(CircleShape).background(color).clickable { notes = applyStyleToSelection(notes, SpanStyle(color = color)); isColorMenuExpanded = false }) } }
                         }
                     }
-                    IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.AutoMirrored.Filled.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
-                    IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.AutoMirrored.Filled.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
-                    IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.AutoMirrored.Filled.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.Start }) { Icon(Icons.Default.FormatAlignLeft, null, tint = if (textAlign == TextAlign.Start) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.Center }) { Icon(Icons.Default.FormatAlignCenter, null, tint = if (textAlign == TextAlign.Center) Color.Cyan else Color.White) }
+                    IconButton(onClick = { textAlign = TextAlign.End }) { Icon(Icons.Default.FormatAlignRight, null, tint = if (textAlign == TextAlign.End) Color.Cyan else Color.White) }
                 }
             }
         }
@@ -205,4 +198,3 @@ fun AddNoteScreen(navController: NavController) {
         }
     }
 }
-
